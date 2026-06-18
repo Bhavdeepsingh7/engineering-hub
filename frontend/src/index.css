@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { @apply border-surface-200 dark:border-surface-700; }
+  body {
+    @apply bg-white text-surface-900 dark:bg-surface-950 dark:text-surface-50;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  ::-webkit-scrollbar { @apply w-1.5; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-surface-200 dark:bg-surface-700 rounded-full; }
+}
+
+@layer utilities {
+  .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+  .animate-slide-up { animation: slideUp 0.35s ease-out; }
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.prose-custom {
+  @apply text-surface-700 dark:text-surface-300 leading-relaxed;
+}
+.prose-custom p { @apply mb-3; }
+.prose-custom h1, .prose-custom h2, .prose-custom h3 { @apply font-semibold text-surface-900 dark:text-surface-50 mb-2 mt-4; }
+.prose-custom code { @apply font-mono text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/30 px-1.5 py-0.5 rounded text-sm; }
+.prose-custom pre { @apply rounded-xl overflow-hidden my-3; }
+.prose-custom ul { @apply list-disc list-inside mb-3 space-y-1; }
+.prose-custom ol { @apply list-decimal list-inside mb-3 space-y-1; }
+.prose-custom strong { @apply font-semibold text-surface-900 dark:text-surface-50; }
