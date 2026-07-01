@@ -43,3 +43,7 @@ async def extract_document(filename: str):
     result = DocumentService.extract_document(filename)
 
     return result
+
+@router.delete("/{filename}")
+async def delete_documents(filename: str):
+    return DocumentService.delete_document(filename)

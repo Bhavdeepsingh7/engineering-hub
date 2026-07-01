@@ -4,8 +4,9 @@ import { Send, Paperclip, Zap, MessageSquare, ArrowUp } from "lucide-react";
 import { ChatSidebar } from "../components/chat/ChatSidebar";
 import { MessageBubble } from "../components/chat/MessageBubble";
 import { TypingIndicator } from "../components/chat/TypingIndicator";
-import { mockMessages } from "../services/mockData";
-import { sendMessage } from "../services/api";
+// import { mockMessages } from "../services/mockData";
+// import { sendMessage } from "../services/api";
+import { askQuestion, createChat, getChat } from "../services/chatService";
 
 const SUGGESTIONS = [
   "How does JWT token refresh work?",
@@ -24,14 +25,24 @@ export function ChatPage() {
   const inputRef = useRef(null);
   const isNew = !chatId || chatId === "new";
 
-  useEffect(() => {
-    if (chatId && mockMessages[chatId]) {
-      setMessages(mockMessages[chatId]);
-    } else if (isNew) {
-      setMessages([]);
-    }
-  }, [chatId]);
+const loadMessages = async (chatId) => {
+  try{
+    const chat = await getChat(chatId);
 
+    setMessages(chat.messages);
+  } catch(err) {
+    console.error(err);
+  }
+}
+
+
+useEffect(() => {
+    if (!chatId || chatId === "new") {
+        setMessages([]);
+        return;
+    }
+    loadMessages(chatId);
+}, [chatId]);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -52,12 +63,22 @@ export function ChatPage() {
     setLoading(true);
 
     try {
-      const { content, sources } = await sendMessage(chatId, text);
+      let currentChatId = chatId;
+
+    if (!currentChatId || currentChatId === "new") {
+    const chat = await createChat();
+
+    currentChatId = chat.id;
+
+    navigate(`/chat/${chat.id}`);
+}
+
+      const result = await askQuestion(currentChatId, text);
       const aiMsg = {
         id: `a-${Date.now()}`,
         role: "assistant",
-        content,
-        sources,
+        content: result.answer,
+        sources: result.sources,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, aiMsg]);

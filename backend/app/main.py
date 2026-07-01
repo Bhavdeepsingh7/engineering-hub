@@ -1,9 +1,29 @@
 from fastapi import FastAPI
-from app.api.routes import health, documents, search, chat
+from app.api.routes import health, documents, search, chat, chats
+from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import SQLModel
+
+
+from app.db.database import engine
+from app.db import models
+
 
 app = FastAPI(
     title="Engineering Intelligence Hub",
     version="1.0.0",
+)
+
+@app.on_event("startup")
+def on_startup():
+    SQLModel.metadata.create_all(engine)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -33,6 +53,8 @@ app.include_router(
     prefix="/chat",
     tags=["Chat"]
 )
+
+app.include_router(chats.router)
 
 
 @app.get("/")

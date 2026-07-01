@@ -22,7 +22,7 @@ export function DocumentRow({ doc, onDelete }) {
         )}
       </Badge>
       <button
-        onClick={() => onDelete(doc.id)}
+        onClick={() => onDelete(doc)}
         className="w-7 h-7 rounded-lg flex items-center justify-center text-surface-300 dark:text-surface-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
       >
         <Trash2 size={14} />

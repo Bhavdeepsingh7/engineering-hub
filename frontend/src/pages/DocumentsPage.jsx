@@ -1,45 +1,77 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { FileText, Search, Filter } from "lucide-react";
 import { TopBar } from "../components/layout/TopBar";
 import { UploadZone } from "../components/documents/UploadZone";
 import { DocumentRow } from "../components/documents/DocumentRow";
-import { mockDocuments } from "../services/mockData";
+import { uploadDocument , getDocument, deleteDocument} from "../services/documentService";
 
 export function DocumentsPage() {
-  const [docs, setDocs] = useState(mockDocuments);
+  const [message, setMessage] = useState("");
+  const [docs, setDocs] = useState([]);
   const [query, setQuery] = useState("");
   const [uploading, setUploading] = useState(false);
+
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    try{
+      const data = await getDocument();
+
+      const formatted = data.map((doc ,index) => ({
+        id:index,
+        name:doc.filename,
+        status: "indexed",
+      }));
+      setDocs(formatted)
+    }
+    catch(error){
+      console.error("failed to load documents", error);
+    }
+  }
 
   const filtered = docs.filter((d) =>
     d.name.toLowerCase().includes(query.toLowerCase())
   );
 
-  const handleUpload = (files) => {
-    setUploading(true);
-    setTimeout(() => {
-      const newDocs = Array.from(files).map((f, i) => ({
-        id: `new-${Date.now()}-${i}`,
-        name: f.name,
-        type: f.name.split(".").pop().toLowerCase(),
-        size: `${(f.size / 1024).toFixed(0)} KB`,
-        uploadedAt: new Date().toISOString().split("T")[0],
-        status: "processing",
-      }));
-      setDocs((prev) => [...newDocs, ...prev]);
+  const handleUpload = async (file) => {
+    if(!file) return ;
+
+    try{
+      setUploading(true);
+      const result = await uploadDocument(file);
+
+      setMessage(
+        `${result.filename} uploaded successfully`
+      );
+
+      await loadDocuments();
+
+    }
+    
+    catch(error){
+      console.error("Upload failed:", error);
+      setMessage("Upload failed. Please try again.");
+    }
+    finally{
       setUploading(false);
-      // Simulate indexing
-      setTimeout(() => {
-        setDocs((prev) =>
-          prev.map((d) =>
-            newDocs.find((n) => n.id === d.id) ? { ...d, status: "indexed" } : d
-          )
-        );
-      }, 3000);
-    }, 800);
+    }
   };
 
-  const handleDelete = (id) => {
-    setDocs((prev) => prev.filter((d) => d.id !== id));
+  const handleDelete = async (doc) => {
+    try{
+      await deleteDocument(doc.name);
+
+      setMessage(`${doc.name} deleted successfully`);
+
+      await loadDocuments();
+    }
+    catch(error){
+      console.error(error);
+      setMessage("Failed to delete document");
+    }
   };
 
   return (
@@ -52,12 +84,19 @@ export function DocumentsPage() {
           <div>
             <h2 className="text-sm font-semibold text-surface-700 dark:text-surface-300 mb-3">Upload documents</h2>
             <UploadZone onUpload={handleUpload} />
-            {uploading && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-surface-500">
-                <div className="w-3 h-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-                Uploading and processing…
-              </div>
-            )}
+
+{uploading && (
+  <div className="mt-3 flex items-center gap-2 text-xs text-surface-500">
+    <div className="w-3 h-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+    Uploading and processing…
+  </div>
+)}
+
+{message && (
+  <div className="mt-3 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
+    {message}
+  </div>
+)}
           </div>
 
           {/* Document list */}

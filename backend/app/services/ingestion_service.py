@@ -1,6 +1,6 @@
 from pathlib import Path 
 
-from app.rag.loaders.pdf_loader import extract_pdf_text
+from app.rag.loaders.document_loader import load_document
 from app.rag.chunking.text_chunker import chunk_text
 from app.rag.pipelines.ingestion_pipeline import ingest_chunks
 from app.rag.vectorstore.chroma_store import get_collection
@@ -12,7 +12,7 @@ class IngestionService:
     def ingest_document(filename: str):
 
         file_path = Path("uploads")/filename
-        text = extract_pdf_text(str(file_path))
+        text = load_document(str(file_path))
         collection = get_collection()
 
         existing = collection.get(

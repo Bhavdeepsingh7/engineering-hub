@@ -18,7 +18,7 @@ export function UploadZone({ onUpload }) {
     });
     if (invalid.length) setError(`Unsupported: ${invalid.join(", ")}. Use PDF, TXT, or MD.`);
     else setError("");
-    if (valid.length) onUpload(valid);
+    if (valid.length) onUpload(valid[0]);
   };
 
   return (
