@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { MessageSquare, Search, Plus } from "lucide-react";
+import { MessageSquare, Search, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getChats } from "../../services/chatService";
+import { getChats, deleteChat } from "../../services/chatService";
 
 export function ChatSidebar() {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ export function ChatSidebar() {
 
   useEffect(() => {
     loadChats();
-  }, []);
+  }, [chatId]);
 
   const loadChats = async () => {
     try {
@@ -20,6 +20,23 @@ export function ChatSidebar() {
       setChats(data);
     } catch (err) {
       console.error("Failed to load chats:", err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const ok = window.confirm("Delete this chat?");
+    if (!ok) return;
+
+    try {
+      await deleteChat(id);
+
+      await loadChats();
+
+      if (Number(chatId) === id) {
+        navigate("/chat/new");
+      }
+    } catch (err) {
+      console.error("Failed to delete chat:", err);
     }
   };
 
@@ -72,7 +89,7 @@ export function ChatSidebar() {
               <button
                 key={chat.id}
                 onClick={() => navigate(`/chat/${chat.id}`)}
-                className={`w-full text-left rounded-xl p-3 mb-2 transition-all duration-200 ${
+                className={`group w-full text-left rounded-xl p-3 mb-2 transition-all duration-200 ${
                   active
                     ? "bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 shadow-sm"
                     : "hover:bg-white dark:hover:bg-surface-800"
@@ -91,9 +108,26 @@ export function ChatSidebar() {
 
                   <div className="flex-1 min-w-0">
 
-                    <p className="text-sm font-medium truncate text-surface-800 dark:text-surface-100">
-                      {chat.title}
-                    </p>
+                    <div className="flex items-center justify-between">
+
+                      <p className="text-sm font-medium truncate text-surface-800 dark:text-surface-100">
+                        {chat.title}
+                      </p>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(chat.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2
+                          size={14}
+                          className="text-surface-400 hover:text-red-500"
+                        />
+                      </button>
+
+                    </div>
 
                     <p className="text-xs text-surface-400 mt-0.5 truncate">
                       Chat #{chat.id}
@@ -104,6 +138,7 @@ export function ChatSidebar() {
                     </p>
 
                   </div>
+
                 </div>
               </button>
             );

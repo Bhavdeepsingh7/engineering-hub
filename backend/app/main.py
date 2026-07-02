@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app.api.routes import health, documents, search, chat, chats
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
-
+from app.connectors.github.router import router as github_router
 
 from app.db.database import engine
 from app.db import models
@@ -55,6 +55,8 @@ app.include_router(
 )
 
 app.include_router(chats.router)
+
+app.include_router(github_router)
 
 
 @app.get("/")

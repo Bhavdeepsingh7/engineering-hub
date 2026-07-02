@@ -23,3 +23,15 @@ class Message(SQLModel , table = True):
     content: str
 
     timestamp: datetime = Field(default_factory = datetime.utcnow)
+
+
+class GitHubConnection(SQLModel , table = True):
+
+    id: Optional[int] =  Field(default=None, primary_key = True)
+
+    github_id: int
+    github_username: str
+
+    access_token: str
+
+    created_at: datetime = Field(default_factory= datetime.utcnow)

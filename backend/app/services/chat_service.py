@@ -1,8 +1,12 @@
+from turtle import title
+
 from app.services.search_service import SearchService
 from app.services.llm_service import LLMService
+from app.db import session
+from app.schemas import chat
 from sqlmodel import Session
 
-from app.db.models import Message
+from app.db.models import Chat, Message
 
 
 class ChatService:
@@ -39,6 +43,21 @@ class ChatService:
 
     @staticmethod
     def process_message(chat_id: int , question: str, session: Session):
+
+        chat = session.get(Chat, chat_id)
+
+    # Rename only if it's still the default title
+        title = question.strip()
+
+        if len(title) > 40:
+            title = title[:40] + "..."
+
+        if chat.title == "New Chat":
+            chat.title = title
+
+    # Save the title change
+        session.add(chat)
+
         user_message = Message(
             chat_id = chat_id,
             role= "user",

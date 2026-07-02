@@ -7,6 +7,7 @@ import { TypingIndicator } from "../components/chat/TypingIndicator";
 // import { mockMessages } from "../services/mockData";
 // import { sendMessage } from "../services/api";
 import { askQuestion, createChat, getChat } from "../services/chatService";
+import { Trash2 } from "lucide-react";
 
 const SUGGESTIONS = [
   "How does JWT token refresh work?",

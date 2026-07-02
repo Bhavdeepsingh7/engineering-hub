@@ -57,3 +57,29 @@ def send_message(chat_id: int,request: ChatRequest,  session: Session = Depends(
         question= request.question,
         session=session
     )
+
+
+@router.delete("/{chat_id}")
+def delete_chat(chat_id: int , session: Session = Depends(get_session)):
+    chat = session.get(Chat, chat_id)
+
+    if not chat:
+        raise HTTPException(
+            status_code=404, 
+            detail="Chat not found"
+        )
+    
+    messages = session.exec(
+        select(Message)
+        .where(Message.chat_id == chat_id)
+    ).all()
+
+    for message in messages:
+        session.delete(message)
+
+    session.delete(chat)
+    session.commit()
+
+    return {
+        "message": "chat deleted successfully"
+    }
