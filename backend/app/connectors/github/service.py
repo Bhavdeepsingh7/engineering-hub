@@ -1,8 +1,7 @@
 import os
 from urllib.parse import urlencode
-from backend.app.db.session import get_session
-from sqlmodel import Session
-from backend.app.db.models import GitHubConnection
+from sqlmodel import Session, select
+from app.db.models import GitHubConnection
 import httpx
 from dotenv import load_dotenv
 
@@ -25,7 +24,7 @@ class GitHubService:
     
 
     @staticmethod
-    async def exchange_code(code: str, session: Session = Depends(get_session)):
+    async def exchange_code(code: str, session: Session):
 
         async with httpx.AsyncClient() as client:
             token_response = await client.post(
@@ -42,6 +41,9 @@ class GitHubService:
 
             token_data = token_response.json()
 
+            if "access_token" not in token_data:
+                raise Exception(f"GitHub OAuth failed: {token_data}")
+
             access_token  = token_data["access_token"]
 
             user_response = await client.get(
@@ -53,6 +55,25 @@ class GitHubService:
             )
 
             user_data = user_response.json()
+
+            existing = session.exec(
+                select(GitHubConnection).where(
+                    GitHubConnection.github_id == user_data["id"]
+                )
+            ).first()
+
+
+            if existing:
+                existing.github_username = user_data["login"]
+                existing.access_token = access_token
+                session.add(existing)
+                session.commit()
+
+                return {
+                    "message": "Github account updated successfully",
+                    "github_username": existing.github_username,
+                }
+                
 
             connection = GitHubConnection(
                 github_id = user_data["id"],
@@ -71,16 +92,43 @@ class GitHubService:
 
 
     @staticmethod
-    async def get_repositories(access_token: str):
+    async def get_repositories(session: Session):
+
+        connection = session.exec(
+            select(GitHubConnection)
+        ).first()
+
+        if not connection:
+            return {
+                "message": "Github account not connected"
+            }
+
         async with httpx.AsyncClient() as client:
 
             response = await client.get(
                 "https://api.github.com/user/repos",
                 headers = {
-                    "Authorization": f"Bearer {access_token}",
+                    "Authorization": f"Bearer {connection.access_token}",
                     "Accept": "application/vnd.github+json"
                 },
+                params = {
+                    "sort": "updated",
+                    "per_page": 100,
+                }
             )
 
         
-        return response.json()
+        repos = response.json()
+
+        return [
+            {
+                "id": repo["id"],
+                "name": repo["name"],
+                "full_name": repo["full_name"],
+                "private": repo["private"],
+                "language": repo["language"],
+                "default_branch": repo["default_branch"],
+                "updated_at": repo["updated_at"],
+            }
+            for repo in repos
+        ]

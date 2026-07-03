@@ -28,7 +28,6 @@ class Message(SQLModel , table = True):
 class GitHubConnection(SQLModel , table = True):
 
     id: Optional[int] =  Field(default=None, primary_key = True)
-
     github_id: int
     github_username: str
 

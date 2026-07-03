@@ -1,4 +1,4 @@
-from fastapi import APIRouter 
+from fastapi import APIRouter , Depends
 from app.connectors.github.service import GitHubService
 from sqlmodel import Session
 from app.db.session import get_session
@@ -21,8 +21,6 @@ async def github_callback(code:str , session: Session = Depends(get_session)):
 
 
 @router.get("/repos")
-async def get_repositories():
+async def get_repositories(session: Session = Depends(get_session)):
 
-    access_token = ...
-
-    return await GitHubService.get_repositories(access_token)
+    return await GitHubService.get_repositories(session)
