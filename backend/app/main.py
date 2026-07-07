@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.routes import health, documents, search, chat, chats
+from app.api.routes import health, documents, search, chat, chats, settings
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 from app.connectors.github.router import router as github_router
@@ -58,6 +58,7 @@ app.include_router(chats.router)
 
 app.include_router(github_router)
 
+app.include_router(settings.router)
 
 @app.get("/")
 def root():

@@ -1,8 +1,9 @@
 import os
 from openai import OpenAI
+from app.services.api_key_service import APIKeyService
 
 client = OpenAI(
-    api_key = os.environ.get("GEMINI_API_KEY"),
+    api_key = APIKeyService.get_api_key("gemini"),
     base_url= "https://generativelanguage.googleapis.com/v1beta/openai/"
 )
 

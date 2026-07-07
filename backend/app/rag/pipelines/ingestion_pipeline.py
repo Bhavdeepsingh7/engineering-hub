@@ -1,6 +1,7 @@
 from app.rag.embeddings.gemini_embeddings import get_embedding_model
 from app.rag.vectorstore.chroma_store import get_collection
 
+
 def ingest_chunks(chunks, filename):
     embedding_model = get_embedding_model()
     collection = get_collection()

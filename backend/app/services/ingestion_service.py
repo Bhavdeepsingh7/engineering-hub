@@ -25,7 +25,7 @@ class IngestionService:
             }
 
         chunks = chunk_text(text)
-        count =  ingest_chunks(chunks ,filename)
+        count =  ingest_chunks( chunks ,filename)
 
 
         return {

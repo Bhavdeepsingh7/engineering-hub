@@ -34,3 +34,10 @@ class GitHubConnection(SQLModel , table = True):
     access_token: str
 
     created_at: datetime = Field(default_factory= datetime.utcnow)
+
+class APIKey(SQLModel, table = True):
+    id: int | None = Field(default=None, primary_key= True)
+
+    provider: str
+
+    api_key : str

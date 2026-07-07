@@ -5,6 +5,7 @@ const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/documents", icon: FileText, label: "Documents" },
   { to: "/chat", icon: MessageSquare, label: "Chats" },
+  { to: "/github", icon: Zap, label: "GitHub" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
 

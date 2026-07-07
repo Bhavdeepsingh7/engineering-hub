@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sun, Moon, Monitor, User, Bell, Shield, Plug, ChevronRight, Check, Zap, GitBranch, Hash, Box } from "lucide-react";
 import { TopBar } from "../components/layout/TopBar";
 import { useTheme } from "../hooks/useTheme";
+import { getApiKeyStatus ,saveApiKey} from "../services/settingsService";
 
 function Section({ title, children }) {
   return (
@@ -52,6 +53,47 @@ export function SettingsPage() {
   const [notifs, setNotifs] = useState({ email: true, browser: false, digest: true });
   const [profileName, setProfileName] = useState("Arjun Kumar");
   const [profileEmail, setProfileEmail] = useState("arjun@example.com");
+  const [geminiKey, setGeminiKey] = useState("")
+  const [configured, setConfigured] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+
+  useEffect(() => {
+    loadGeminiStatus();
+    
+  },[]);
+
+
+  const loadGeminiStatus = async () => {
+    try{
+      const data = await getApiKeyStatus("gemini");
+      setConfigured(data.configured);
+    }catch(err){
+      console.error(err);
+    }
+  }
+
+  const handleSaveGeminiKey = async () => {
+    try {
+
+        setSaving(true);
+
+        await saveApiKey(
+            "gemini",
+            geminiKey,
+        );
+
+        setConfigured(true);
+        setGeminiKey("");
+
+    } catch (err) {
+        console.error(err);
+    } finally {
+        setSaving(false);
+    }
+};
+
+
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -94,6 +136,46 @@ export function SettingsPage() {
               </button>
             </div>
           </Section>
+
+
+          <Section title="AI Providers">
+
+  <Row
+    label="Gemini API Key"
+    desc={
+      configured
+        ? "A Gemini API key is already configured."
+        : "Provide your own Gemini API key to power chat and embeddings."
+    }
+  >
+    {configured && (
+      <span className="text-xs font-medium text-emerald-600">
+        ✓ Configured
+      </span>
+    )}
+  </Row>
+
+  <input
+    type="password"
+    value={geminiKey}
+    onChange={(e) => setGeminiKey(e.target.value)}
+    placeholder={
+      configured
+        ? "Enter a new key to replace the existing one"
+        : "Enter Gemini API Key"
+    }
+    className="w-full text-sm px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 outline-none"
+  />
+
+  <button
+    onClick={handleSaveGeminiKey}
+    disabled={!geminiKey || saving}
+    className="px-4 py-2 rounded-lg bg-brand-600 text-white disabled:opacity-50"
+  >
+    {saving ? "Saving..." : "Save API Key"}
+  </button>
+
+</Section>
 
           {/* Appearance */}
           <Section title="Appearance">
