@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Download, CheckCircle } from "lucide-react";
 import { TopBar } from "../components/layout/TopBar";
-import { getGitHubStatus , getGitHubLoginUrl, getRepositories, importRepository, syncRepository, removeRepository} from "../services/githubservice";
+import { getGitHubStatus , getGitHubLoginUrl, getRepositories, importRepository, syncRepository, removeRepository, getImportedRepositories } from "../services/githubservice";
 
 
 export function GitHubPage() {
@@ -13,6 +13,7 @@ export function GitHubPage() {
     const [importedRepos, setImportedRepos] = useState(new Set());
     const [syncingRepo, setSyncingRepo] = useState(null)
     const [removingRepo, setRemovingRepo] = useState(null)
+    const [repoToRemove, setRepoToRemove] = useState(null);
 
     useEffect(() => {
         loadStatus();
@@ -58,7 +59,10 @@ export function GitHubPage() {
 
         setStatus(status);
         if(status.connected){
-            await loadRepositories();
+            await Promise.all([
+                loadRepositories(),
+                loadImportedRepositories(),
+            ])
         }
     };
 
@@ -73,9 +77,11 @@ export function GitHubPage() {
 
             setImportedRepos(prev => {
                 const next = new Set(prev);
-                next.add(repo.id);
+                next.add(`${status.github_username}/${repo.name}`);
                 return next;
             })
+
+            await loadImportedRepositories();
 
             console.log(result)
         } catch(err){
@@ -92,7 +98,11 @@ export function GitHubPage() {
 
             await syncRepository(owner, repo);
 
-            await loadRepositories();
+            await Promise.all([
+    loadRepositories(),
+    loadImportedRepositories(),
+]);
+
         } catch(err){
             console.error(err);
         } finally{
@@ -107,11 +117,32 @@ export function GitHubPage() {
 
             await removeRepository(owner, repo);
 
-            await loadRepositories();
+            await Promise.all([
+    loadRepositories(),
+    loadImportedRepositories(),
+]);
         } catch(err){
             console.error(err);
         } finally{
             setRemovingRepo(null);
+        }
+    }
+
+
+    const loadImportedRepositories = async () => {
+        try{
+            const data = await getImportedRepositories();
+
+            const set = new Set(
+                data.map(
+                    repo => `${repo.owner}/${repo.repo}`
+                )
+            );
+
+            setImportedRepos(set)
+
+        } catch(err){
+            console.error(err)
         }
     }
 
@@ -204,13 +235,14 @@ export function GitHubPage() {
 
             </div>
 
-{importedRepos.has(repo.id) ? (
+{importedRepos.has(`${status.github_username}/${repo.name}`) ? (
 
 <div className="flex gap-2">
 
     <button
-        onClick={() => handleSync(owner, repo.name)}
+        onClick={() => handleSync(status.github_username, repo.name)}
         disabled={syncingRepo === repo.name}
+        className="px-4 py-2 rounded-lg bg-brand-600 text-white"
     >
         {syncingRepo === repo.name
             ? "Syncing..."
@@ -218,10 +250,11 @@ export function GitHubPage() {
     </button>
 
     <button
-        onClick={() => handleRemove(owner, repo.name)}
-        disabled={removingRepo === repo.name}
+        onClick={() => setRepoToRemove(repo)}
+        disabled={removingRepo === repoToRemove?.name}
+        className="px-4 py-2 rounded-lg bg-red-500 text-white"
     >
-        {removingRepo === repo.name
+        {removingRepo === repoToRemove?.name
             ? "Removing..."
             : "Remove"}
     </button>
@@ -250,6 +283,59 @@ export function GitHubPage() {
                 </div>
 
             </div>
+
+{repoToRemove && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-surface-900 p-6 shadow-xl">
+
+            <h2 className="text-lg font-semibold">
+                Remove Repository
+            </h2>
+
+            <p className="mt-2 text-sm">
+    Are you sure you want to remove{" "}
+    <span className="font-semibold text-surface-900 dark:text-surface-100">
+        {repoToRemove.name}
+    </span>
+    ?
+</p>
+
+
+            <div className="mt-6 flex justify-end gap-3">
+
+                <button
+                    onClick={() => setRepoToRemove(null)}
+                    className="px-4 py-2 rounded-lg border"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    onClick={async () => {
+
+                        await handleRemove(
+                            status.github_username,
+                            repoToRemove.name
+                        );
+
+                        setRepoToRemove(null);
+
+                    }}
+                    className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                >
+                     {removingRepo === repoToRemove?.name
+            ? "Removing..."
+            : "Remove"}
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+)}
+
 
         </div>
     );

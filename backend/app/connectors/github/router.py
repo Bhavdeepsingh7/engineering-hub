@@ -77,3 +77,9 @@ async def delete_repository(
         owner = owner,
         repo = repo,
     )
+
+@router.get("/imported")
+async def get_imported_repositories(
+    session: Session = Depends(get_session),
+):
+    return GitHubService.get_imported_repositories(session)

@@ -546,3 +546,22 @@ class GitHubService:
         return {
             "message": "Repository removed successfully"
         }
+
+    
+    @staticmethod
+    def get_imported_repositories(session: Session):
+
+        repositories = session.exec(
+            select(
+                GitHubIndexedFile.owner,
+                GitHubIndexedFile.repo,
+            ).distinct()
+        ).all()
+
+        return [
+            {
+                "owner": owner,
+                "repo": repo,
+            }
+            for owner, repo in repositories
+        ]
