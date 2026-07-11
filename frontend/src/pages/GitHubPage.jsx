@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Download, CheckCircle } from "lucide-react";
 import { TopBar } from "../components/layout/TopBar";
-import { getGitHubStatus , getGitHubLoginUrl, getRepositories, importRepository} from "../services/githubservice";
+import { getGitHubStatus , getGitHubLoginUrl, getRepositories, importRepository, syncRepository, removeRepository} from "../services/githubservice";
 
 
 export function GitHubPage() {
@@ -11,7 +11,8 @@ export function GitHubPage() {
     const [repositories, setRepositories] = useState([]);
     const [importing, setImporting] = useState(null);
     const [importedRepos, setImportedRepos] = useState(new Set());
-
+    const [syncingRepo, setSyncingRepo] = useState(null)
+    const [removingRepo, setRemovingRepo] = useState(null)
 
     useEffect(() => {
         loadStatus();
@@ -81,6 +82,36 @@ export function GitHubPage() {
             console.error(err)
         } finally{
             setImporting(null);
+        }
+    }
+
+
+    const handleSync = async (owner , repo) => {
+        try{
+            setSyncingRepo(repo);
+
+            await syncRepository(owner, repo);
+
+            await loadRepositories();
+        } catch(err){
+            console.error(err);
+        } finally{
+            setSyncingRepo(null);
+        }
+    }
+
+
+    const handleRemove = async (owner , repo) => {
+        try {
+            setRemovingRepo(repo);
+
+            await removeRepository(owner, repo);
+
+            await loadRepositories();
+        } catch(err){
+            console.error(err);
+        } finally{
+            setRemovingRepo(null);
         }
     }
 
@@ -174,12 +205,30 @@ export function GitHubPage() {
             </div>
 
 {importedRepos.has(repo.id) ? (
+
+<div className="flex gap-2">
+
     <button
-        disabled
-        className="px-4 py-2 rounded-lg bg-green-600 text-white cursor-default"
+        onClick={() => handleSync(owner, repo.name)}
+        disabled={syncingRepo === repo.name}
     >
-        ✓ Imported
+        {syncingRepo === repo.name
+            ? "Syncing..."
+            : "Sync"}
     </button>
+
+    <button
+        onClick={() => handleRemove(owner, repo.name)}
+        disabled={removingRepo === repo.name}
+    >
+        {removingRepo === repo.name
+            ? "Removing..."
+            : "Remove"}
+    </button>
+
+</div>
+
+    
 ) : (
     <button
         onClick={() => handleImport(repo)}

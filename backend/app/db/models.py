@@ -41,3 +41,15 @@ class APIKey(SQLModel, table = True):
     provider: str
 
     api_key : str
+
+
+class GitHubIndexedFile(SQLModel, table=True):
+    id: int | None = Field(default =None, primary_key = True)
+
+    owner: str
+    repo: str
+
+    path: str
+    sha: str
+
+    indexed_at: datetime = Field(default_factory = datetime.utcnow)

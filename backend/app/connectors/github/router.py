@@ -50,3 +50,30 @@ async def download_repository(
 @router.get("/status")
 def github_status(session: Session = Depends(get_session)):
     return GitHubService.get_status(session)
+
+
+
+@router.post("/repos/{owner}/{repo}/sync")
+async def sync_repository(
+    owner: str,
+    repo: str,
+    session: Session = Depends(get_session),
+):
+    return await GitHubService.sync_repository(
+        session=session,
+        owner = owner,
+        repo =repo,
+    )
+
+
+@router.delete("/repos/{owner}/{repo}")
+async def delete_repository(
+    owner: str,
+    repo: str,
+    session: Session = Depends(get_session),
+):
+    return await GitHubService.delete_repository(
+        session = session,
+        owner = owner,
+        repo = repo,
+    )
