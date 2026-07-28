@@ -7,9 +7,10 @@ class Retriver:
     @staticmethod
     def retrieve(
         question: str,
+        user_id: str,
         k: int = 5,
     ):
-        embedding_model = get_embedding_model()
+        embedding_model = get_embedding_model(user_id)
 
         query_embedding = embedding_model.embed_query(
             question
@@ -18,15 +19,16 @@ class Retriver:
         collection = get_collection()
 
         results = collection.query(
-            query_embedding = [query_embedding],
-            n_results = k
+            query_embeddings=[query_embedding],
+            n_results=k,
+            where={"user_id": user_id},
         )
 
         retrieved = []
 
         for doc , meta in zip(
             results["documents"][0],
-            results["metadata"][0],
+            results["metadatas"][0],
         ):
             retrieved.append(
                 {

@@ -4,10 +4,10 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from app.services.api_key_service import APIKeyService
 
 
-def get_embedding_model():
+def get_embedding_model(user_id: str):
     
     api_key = APIKeyService.get_api_key(
-        "gemini",
+        "gemini", user_id,
     )
 
     return GoogleGenerativeAIEmbeddings(

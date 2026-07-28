@@ -24,12 +24,12 @@ class DocumentService:
         }
 
     @staticmethod
-    def delete_document(filename: str):
-        file_path = os.path.join(UPLOAD_DIR,filename)
+    def delete_document(stored_filename: str, source_name: str, user_id: str):
+        file_path = os.path.join(UPLOAD_DIR, stored_filename)
         collection = get_collection()
 
         collection.delete(
-            where = {"source": filename}
+            where={"$and": [{"source": source_name}, {"user_id": user_id}]}
         )
 
         if os.path.exists(file_path):

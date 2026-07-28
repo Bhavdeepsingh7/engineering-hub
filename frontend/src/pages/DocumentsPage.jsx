@@ -146,7 +146,7 @@ export function DocumentsPage() {
             <div>
               <p className="text-xs font-semibold text-brand-800 dark:text-brand-300">Supported formats</p>
               <p className="text-xs text-brand-600 dark:text-brand-400 mt-0.5">
-                PDF, TXT, and Markdown (.md) files up to 50 MB each. Documents are chunked and embedded automatically after upload.
+                PDF, TXT, Markdown (.md), and PPTX files up to 5 MB each. Documents are chunked and embedded automatically after upload.
               </p>
             </div>
           </div>

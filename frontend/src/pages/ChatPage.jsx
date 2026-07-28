@@ -7,7 +7,9 @@ import { TypingIndicator } from "../components/chat/TypingIndicator";
 // import { mockMessages } from "../services/mockData";
 // import { sendMessage } from "../services/api";
 import { askQuestion, createChat, getChat } from "../services/chatService";
+import { getDocument } from "../services/documentService";
 import { Trash2 } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
 
 const SUGGESTIONS = [
   "How does JWT token refresh work?",
@@ -22,6 +24,8 @@ export function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [documentCount, setDocumentCount] = useState(null);
+  const { user } = useUser();
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const isNew = !chatId || chatId === "new";
@@ -44,6 +48,20 @@ useEffect(() => {
     }
     loadMessages(chatId);
 }, [chatId]);
+
+  useEffect(() => {
+    let active = true;
+
+    getDocument()
+      .then((documents) => {
+        if (active) setDocumentCount(documents.length);
+      })
+      .catch((error) => console.error("Failed to load document count", error));
+
+    return () => {
+      active = false;
+    };
+  }, []);
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
@@ -104,7 +122,7 @@ useEffect(() => {
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-surface-950">
         {/* Header */}
-        <div className="h-14 flex items-center px-5 border-b border-surface-200 dark:border-surface-800 shrink-0">
+        <div className="h-14 flex items-center justify-between px-5 border-b border-surface-200 dark:border-surface-800 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <Zap size={12} className="text-white" />
@@ -113,8 +131,20 @@ useEffect(() => {
               <h1 className="text-sm font-semibold text-surface-900 dark:text-surface-50 leading-none">
                 {isNew ? "New conversation" : `Chat #${chatId}`}
               </h1>
-              <p className="text-xs text-surface-400 mt-0.5">5 documents in context</p>
+              <p className="text-xs text-surface-400 mt-0.5">
+                {documentCount === null ? "Loading documents…" : `${documentCount} ${documentCount === 1 ? "document" : "documents"} available`}
+              </p>
             </div>
+          </div>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="hidden sm:block max-w-32 truncate text-xs font-medium text-surface-700 dark:text-surface-200">
+              {user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account"}
+            </span>
+            {user?.imageUrl ? (
+              <img className="h-7 w-7 rounded-full" src={user.imageUrl} alt={`${user.fullName || "User"} profile`} />
+            ) : (
+              <div className="h-7 w-7 rounded-full bg-surface-200 dark:bg-surface-700" aria-label="User profile" />
+            )}
           </div>
         </div>
 

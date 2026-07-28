@@ -1,6 +1,8 @@
 from multiprocessing import connection
 import os
 import base64
+import hashlib
+import hmac
 from urllib.parse import urlencode
 from app.rag.loaders.document_loader import load_document
 from app.rag.chunking.text_chunker import chunk_text
@@ -20,12 +22,18 @@ load_dotenv()
 class GitHubService:
 
     @staticmethod
-    def get_login_url():
+    def get_login_url(user_id: str):
+        secret = os.getenv("APP_SECRET_KEY")
+        if not secret:
+            raise ValueError("APP_SECRET_KEY must be configured")
+        payload = base64.urlsafe_b64encode(user_id.encode()).decode()
+        signature = hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
 
         params = {
             "client_id": os.getenv("GITHUB_CLIENT_ID"),
             "redirect_uri": os.getenv("GITHUB_CALLBACK_URL"),
             "scope": "repo read:user",
+            "state": f"{payload}.{signature}",
         }
 
         return {
@@ -34,7 +42,18 @@ class GitHubService:
     
 
     @staticmethod
-    async def exchange_code(code: str, session: Session):
+    def verify_state(state: str) -> str:
+        try:
+            payload, signature = state.rsplit(".", 1)
+            expected = hmac.new(os.environ["APP_SECRET_KEY"].encode(), payload.encode(), hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(signature, expected):
+                raise ValueError
+            return base64.urlsafe_b64decode(payload.encode()).decode()
+        except (KeyError, ValueError, UnicodeDecodeError) as exc:
+            raise ValueError("Invalid GitHub OAuth state") from exc
+
+    @staticmethod
+    async def exchange_code(code: str, session: Session, user_id: str):
 
         async with httpx.AsyncClient() as client:
             token_response = await client.post(
@@ -68,7 +87,7 @@ class GitHubService:
 
             existing = session.exec(
                 select(GitHubConnection).where(
-                    GitHubConnection.github_id == user_data["id"]
+                    GitHubConnection.user_id == user_id
                 )
             ).first()
 
@@ -87,6 +106,7 @@ class GitHubService:
 
             connection = GitHubConnection(
                 github_id = user_data["id"],
+                user_id=user_id,
                 github_username = user_data["login"],
                 access_token = access_token
             )
@@ -100,10 +120,10 @@ class GitHubService:
             )
 
     @staticmethod
-    async def get_repositories(session: Session):
+    async def get_repositories(session: Session, user_id: str):
 
         connection = session.exec(
-            select(GitHubConnection)
+            select(GitHubConnection).where(GitHubConnection.user_id == user_id)
         ).first()
 
         if not connection:
@@ -147,9 +167,10 @@ class GitHubService:
         session: Session,
         owner: str,
         repo: str,
+        user_id: str,
     ):
         connection = session.exec(
-            select(GitHubConnection)
+            select(GitHubConnection).where(GitHubConnection.user_id == user_id)
         ).first()
 
         if not connection: 
@@ -219,16 +240,17 @@ class GitHubService:
     async def download_repository(
         session: Session,
         owner: str,
-        repo: str
+        repo: str,
+        user_id: str,
     ):
         connection = session.exec(
-            select(GitHubConnection)
+            select(GitHubConnection).where(GitHubConnection.user_id == user_id)
         ).first()
 
         if not connection:
             raise Exception("GitHub not connected")
         
-        files = await GitHubService.get_repository_tree(session , owner , repo,)
+        files = await GitHubService.get_repository_tree(session, owner, repo, user_id)
 
         documents = []
 
@@ -242,7 +264,8 @@ class GitHubService:
                 repo= repo ,
                 file= file,
                 access_token=connection.access_token,
-                temp_dir=temp_dir
+                temp_dir=temp_dir,
+                user_id=user_id,
             )
 
 
@@ -254,9 +277,9 @@ class GitHubService:
 
     
     @staticmethod
-    def get_status(session: Session):
+    def get_status(session: Session, user_id: str):
         connection = session.exec(
-            select(GitHubConnection)
+            select(GitHubConnection).where(GitHubConnection.user_id == user_id)
         ).first()
 
         if not connection:
@@ -278,9 +301,11 @@ class GitHubService:
         repo: str,
         path: str,
         sha: str,
+        user_id: str,
     ):
         existing = session.exec(
             select(GitHubIndexedFile).where(
+                GitHubIndexedFile.user_id == user_id,
                 GitHubIndexedFile.owner == owner,
                 GitHubIndexedFile.repo == repo,
                 GitHubIndexedFile.path == path,
@@ -293,7 +318,8 @@ class GitHubService:
         else:
             session.add(
                 GitHubIndexedFile(
-                    owner= owner,
+                    user_id=user_id,
+                    owner=owner,
                     repo = repo,
                     path = path,
                     sha = sha,
@@ -309,9 +335,11 @@ class GitHubService:
         owner:str,
         repo:str,
         github_files: list,
+        user_id: str,
     ):
         indexed_files = session.exec(
             select(GitHubIndexedFile).where(
+                GitHubIndexedFile.user_id == user_id,
                 GitHubIndexedFile.owner == owner,
                 GitHubIndexedFile.repo == repo,
             )
@@ -365,6 +393,7 @@ class GitHubService:
         file: dict,
         access_token: str,
         temp_dir: str,
+        user_id: str,
     ):
         content = await GitHubService.download_file(
             owner,
@@ -399,7 +428,7 @@ class GitHubService:
         github_filename = f"github/{owner}/{repo}/{file["path"]}"
 
         ingest_chunks(
-            chunks, github_filename
+            chunks, github_filename, user_id
         )
 
         GitHubService.save_indexed_file(
@@ -408,6 +437,7 @@ class GitHubService:
             repo=repo,
             path=github_filename,
             sha=file["sha"],
+            user_id=user_id,
         )
 
         return {
@@ -417,13 +447,13 @@ class GitHubService:
 
     
     @staticmethod
-    def delete_vectors(path: str):
+    def delete_vectors(path: str, user_id: str):
 
         collection= get_collection()
 
         collection.delete(
             where={
-                "source": path
+                "$and": [{"source": path}, {"user_id": user_id}]
             }
         )
 
@@ -432,11 +462,12 @@ class GitHubService:
     async def sync_repository(
         session: Session,
         owner: str,
-        repo:str,
+        repo: str,
+        user_id: str,
     ):
         
         connection = session.exec(
-            select(GitHubConnection)
+            select(GitHubConnection).where(GitHubConnection.user_id == user_id)
         ).first()
 
 
@@ -447,22 +478,16 @@ class GitHubService:
             session, 
             owner,
             repo,
+            user_id,
         )
 
         diff = GitHubService.compare_repository(
             session = session,
             owner = owner,
             repo = repo ,
-            github_files = github_files
+            github_files=github_files,
+            user_id=user_id,
         )
-
-        print("New:", len(diff["new"]))
-        print("Modified:", len(diff["modified"]))
-        print("Deleted:", len(diff["deleted"]))
-        print("Unchanged:", len(diff["unchanged"]))
-
-        print("New files:", [f["path"] for f in diff["new"]])
-        print("Modified files:", [f["path"] for f in diff["modified"]])
 
         temp_dir =  tempfile.mkdtemp()
 
@@ -473,7 +498,8 @@ class GitHubService:
                 repo = repo ,
                 file = file,
                 access_token = connection.access_token,
-                temp_dir = temp_dir,
+                temp_dir=temp_dir,
+                user_id=user_id,
             )
 
         
@@ -482,7 +508,7 @@ class GitHubService:
             github_filename = f"github/{owner}/{repo}/{file['path']}"
 
             GitHubService.delete_vectors(
-                github_filename
+                github_filename, user_id
             )
 
             await GitHubService.process_file(
@@ -491,13 +517,14 @@ class GitHubService:
                 repo = repo ,
                 file = file, 
                 access_token= connection.access_token ,
-                temp_dir = temp_dir,
+                temp_dir=temp_dir,
+                user_id=user_id,
             )
 
         for file in diff["deleted"]:
 
             GitHubService.delete_vectors(
-                file.path
+                file.path, user_id
             )
 
             session.delete(file)
@@ -518,9 +545,11 @@ class GitHubService:
         session: Session,
         owner: str,
         repo: str,
+        user_id: str,
     ):
         indexed_files = session.exec(
             select(GitHubIndexedFile).where(
+                GitHubIndexedFile.user_id == user_id,
                 GitHubIndexedFile.owner == owner,
                 GitHubIndexedFile.repo == repo,
             )
@@ -534,7 +563,7 @@ class GitHubService:
 
         for file in indexed_files:
             GitHubService.delete_vectors(
-                file.path
+                file.path, user_id
             )
 
         for file in indexed_files:
@@ -549,13 +578,13 @@ class GitHubService:
 
     
     @staticmethod
-    def get_imported_repositories(session: Session):
+    def get_imported_repositories(session: Session, user_id: str):
 
         repositories = session.exec(
             select(
                 GitHubIndexedFile.owner,
                 GitHubIndexedFile.repo,
-            ).distinct()
+            ).where(GitHubIndexedFile.user_id == user_id).distinct()
         ).all()
 
         return [

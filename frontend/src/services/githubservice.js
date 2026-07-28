@@ -1,8 +1,4 @@
-import axios from "axios";
-
-const API = axios.create({
-  baseURL: "http://localhost:8000",
-});
+import API from "./api";
 
 export const getGitHubStatus = async () => {
     const response = await API.get("/github/status");

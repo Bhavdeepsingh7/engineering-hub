@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { LayoutDashboard, FileText, MessageSquare, Settings, Zap, ChevronRight, Plus } from "lucide-react";
+import { useUser } from "@clerk/clerk-react";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -11,6 +12,14 @@ const navItems = [
 
 export function Sidebar() {
   const navigate = useNavigate();
+  const { user } = useUser();
+  const displayName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
+  const initials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   return (
     <aside className="w-60 shrink-0 h-screen flex flex-col bg-surface-50 dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800">
       {/* Logo */}
@@ -65,12 +74,15 @@ export function Sidebar() {
       {/* Footer */}
       <div className="px-4 py-4 border-t border-surface-200 dark:border-surface-800">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-xs font-semibold">
-            AK
-          </div>
+          {user?.imageUrl ? (
+            <img className="w-7 h-7 rounded-full" src={user.imageUrl} alt={`${displayName} profile`} />
+          ) : (
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white text-xs font-semibold">
+              {initials}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-surface-800 dark:text-surface-200 truncate">Arjun Kumar</p>
-            <p className="text-xs text-surface-400 truncate">Pro Plan</p>
+            <p className="text-xs font-medium text-surface-800 dark:text-surface-200 truncate">{displayName}</p>
           </div>
         </div>
       </div>

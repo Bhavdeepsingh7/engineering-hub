@@ -1,5 +1,15 @@
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load the backend configuration before importing routes, middleware, or any
+# authentication dependency.  Authentication must not depend on an unrelated
+# module (such as the GitHub connector) happening to import python-dotenv.
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+
 from fastapi import FastAPI
-from app.api.routes import health, documents, search, chat, chats, settings
+from app.api.routes import health, documents, search, chat, chats, settings, dashboard
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 from app.connectors.github.router import router as github_router
@@ -20,7 +30,7 @@ def on_startup():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,6 +69,7 @@ app.include_router(chats.router)
 app.include_router(github_router)
 
 app.include_router(settings.router)
+app.include_router(dashboard.router)
 
 @app.get("/")
 def root():

@@ -1,8 +1,4 @@
-import axios from "axios";
-
-const api = axios.create({
-  baseURL: "http://localhost:8000",
-});
+import api from "./api";
 export const saveApiKey = async (provider, apiKey) => {
     const response = await api.post("/settings/api-key", {
         provider,

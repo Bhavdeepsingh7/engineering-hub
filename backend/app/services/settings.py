@@ -8,11 +8,11 @@ class SettingsService:
     def save_api_key(
         session: Session,
         provider: str,
-        api_key: str,
+        api_key: str, user_id: str,
     ):
         existing = session.exec(
             select(APIKey).where(
-                APIKey.provider == provider
+                APIKey.provider == provider, APIKey.user_id == user_id
             )
         ).first()
 
@@ -26,7 +26,7 @@ class SettingsService:
             }
         
         key = APIKey(
-            provider= provider,
+            provider= provider, user_id=user_id,
             api_key = api_key,
         )
 
@@ -43,11 +43,11 @@ class SettingsService:
     @staticmethod
     def get_api_key_status(
         session: Session,
-        provider: str,
+        provider: str, user_id: str,
     ):
         key = session.exec(
             select(APIKey).where(
-                APIKey.provider == provider
+                APIKey.provider == provider, APIKey.user_id == user_id
             )
         ).first()
 

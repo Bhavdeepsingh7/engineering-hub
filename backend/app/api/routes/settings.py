@@ -4,6 +4,7 @@ from sqlmodel import Session
 from app.db.session import get_session
 from app.schemas.settings import APIkeyRequest
 from app.services.settings import SettingsService
+from app.core.auth import get_current_user_id
 
 router  = APIRouter(
     prefix ="/settings",
@@ -14,11 +15,12 @@ router  = APIRouter(
 def save_api_key(
     request: APIkeyRequest,
     session : Session = Depends(get_session),
+    user_id: str = Depends(get_current_user_id),
 ):
     return SettingsService.save_api_key(
         session,
         request.provider,
-        request.api_key,
+        request.api_key, user_id,
     )
 
 
@@ -26,8 +28,9 @@ def save_api_key(
 def get_api_key_status(
     provider: str,
     session: Session = Depends(get_session),
+    user_id: str = Depends(get_current_user_id),
 ):
     return SettingsService.get_api_key_status(
         session,
-        provider,
+        provider, user_id,
     )

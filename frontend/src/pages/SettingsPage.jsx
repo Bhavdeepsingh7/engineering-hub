@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Sun, Moon, Monitor, User, Bell, Shield, Plug, ChevronRight, Check, Zap, GitBranch, Hash, Box } from "lucide-react";
+import { Sun, Moon, Monitor, Check } from "lucide-react";
 import { TopBar } from "../components/layout/TopBar";
 import { useTheme } from "../hooks/useTheme";
 import { getApiKeyStatus ,saveApiKey} from "../services/settingsService";
+import { useUser } from "@clerk/clerk-react";
 
 function Section({ title, children }) {
   return (
@@ -27,41 +28,24 @@ function Row({ label, desc, children }) {
   );
 }
 
-function Toggle({ value, onChange }) {
-  return (
-    <button
-      onClick={() => onChange(!value)}
-      className={`w-10 h-5.5 rounded-full transition-colors duration-200 flex items-center ${value ? "bg-brand-600" : "bg-surface-200 dark:bg-surface-700"}`}
-      style={{ height: "22px" }}
-    >
-      <span className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ml-0.5 ${value ? "translate-x-4.5" : "translate-x-0"}`}
-        style={{ transform: value ? "translateX(18px)" : "translateX(0)" }}
-      />
-    </button>
-  );
-}
-
-const integrations = [
-  { icon: GitBranch, name: "GitHub", desc: "Sync repositories and READMEs", connected: true },
-  { icon: Hash, name: "Slack", desc: "Get answers directly in Slack", connected: false },
-  { icon: Box, name: "Figma", desc: "Import design documentation", connected: false },
-  { icon: Zap, name: "Zapier", desc: "Automate document ingestion", connected: false },
-];
+const providers = ["gemini", "openai", "anthropic", "groq", "openrouter"];
 
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
-  const [notifs, setNotifs] = useState({ email: true, browser: false, digest: true });
-  const [profileName, setProfileName] = useState("Arjun Kumar");
-  const [profileEmail, setProfileEmail] = useState("arjun@example.com");
+  const { user } = useUser();
   const [geminiKey, setGeminiKey] = useState("")
   const [configured, setConfigured] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [providerKeys, setProviderKeys] = useState({});
+  const [providerStatus, setProviderStatus] = useState({});
 
 
   useEffect(() => {
-    loadGeminiStatus();
-    
-  },[]);
+    Promise.all(providers.map(async (provider) => [provider, await getApiKeyStatus(provider)])).then((entries) => setProviderStatus(Object.fromEntries(entries.map(([provider, data]) => [provider, data.configured]))));
+  }, []);
+
+  const profileName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
+  const profileEmail = user?.primaryEmailAddress?.emailAddress || "";
 
 
   const loadGeminiStatus = async () => {
@@ -104,22 +88,25 @@ export function SettingsPage() {
           {/* Profile */}
           <Section title="Profile">
             <div className="flex items-center gap-4 pb-4 border-b border-surface-100 dark:border-surface-800">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-brand-600/25">
-                AK
-              </div>
+              {user?.imageUrl ? (
+                <img className="w-14 h-14 rounded-2xl object-cover shadow-md shadow-brand-600/25" src={user.imageUrl} alt={`${profileName} profile`} />
+              ) : (
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-brand-600/25">
+                  {profileName.slice(0, 2).toUpperCase()}
+                </div>
+              )}
               <div>
                 <p className="text-sm font-semibold text-surface-900 dark:text-surface-100">{profileName}</p>
                 <p className="text-xs text-surface-400">{profileEmail}</p>
-                <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-md bg-brand-50 dark:bg-brand-950/40 text-brand-700 dark:text-brand-400 text-xs font-medium">Pro Plan</span>
               </div>
-              <button className="ml-auto text-xs text-brand-600 dark:text-brand-400 font-medium hover:underline">Change avatar</button>
+              <a href="https://accounts.clerk.com/user" className="ml-auto text-xs text-brand-600 dark:text-brand-400 font-medium hover:underline">Manage profile</a>
             </div>
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-medium text-surface-600 dark:text-surface-400 block mb-1.5">Full name</label>
                 <input
                   value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
+                  readOnly
                   className="w-full text-sm px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-800 dark:text-surface-200 placeholder-surface-400 outline-none focus:border-brand-400 dark:focus:border-brand-600 focus:ring-2 focus:ring-brand-50 dark:focus:ring-brand-950/50 transition-all"
                 />
               </div>
@@ -127,18 +114,16 @@ export function SettingsPage() {
                 <label className="text-xs font-medium text-surface-600 dark:text-surface-400 block mb-1.5">Email address</label>
                 <input
                   value={profileEmail}
-                  onChange={(e) => setProfileEmail(e.target.value)}
+                  readOnly
                   className="w-full text-sm px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-800 dark:text-surface-200 placeholder-surface-400 outline-none focus:border-brand-400 dark:focus:border-brand-600 focus:ring-2 focus:ring-brand-50 dark:focus:ring-brand-950/50 transition-all"
                 />
               </div>
-              <button className="px-4 py-2 rounded-lg bg-brand-600 text-white text-xs font-medium hover:bg-brand-700 transition-colors shadow-sm">
-                Save changes
-              </button>
+              <p className="text-xs text-surface-400">Name, email, and profile image are managed through your sign-in account.</p>
             </div>
           </Section>
 
 
-          <Section title="AI Providers">
+          <Section title="Model Providers">
 
   <Row
     label="Gemini API Key"
@@ -177,6 +162,13 @@ export function SettingsPage() {
 
 </Section>
 
+          <div className="space-y-3">
+            {providers.filter((provider) => provider !== "gemini").map((provider) => <Section key={provider} title={provider === "anthropic" ? "Anthropic Claude" : provider[0].toUpperCase() + provider.slice(1)}>
+              <div className="flex gap-2"><input type="password" value={providerKeys[provider] || ""} onChange={(event) => setProviderKeys({ ...providerKeys, [provider]: event.target.value })} placeholder={`Enter ${provider} API key`} className="flex-1 text-sm px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 outline-none"/><button onClick={async () => { await saveApiKey(provider, providerKeys[provider]); setProviderStatus({ ...providerStatus, [provider]: true }); setProviderKeys({ ...providerKeys, [provider]: "" }); }} disabled={!providerKeys[provider]} className="px-3 py-2 rounded-lg bg-brand-600 text-white text-xs disabled:opacity-50">Save</button></div>
+              {providerStatus[provider] && <p className="text-xs text-emerald-600">Connected</p>}
+            </Section>)}
+          </div>
+
           {/* Appearance */}
           <Section title="Appearance">
             <div>
@@ -203,55 +195,6 @@ export function SettingsPage() {
                 ))}
               </div>
             </div>
-          </Section>
-
-          {/* Notifications */}
-          <Section title="Notifications">
-            <Row label="Email notifications" desc="Receive summaries and alerts by email">
-              <Toggle value={notifs.email} onChange={(v) => setNotifs((n) => ({ ...n, email: v }))} />
-            </Row>
-            <Row label="Browser notifications" desc="Get real-time alerts in your browser">
-              <Toggle value={notifs.browser} onChange={(v) => setNotifs((n) => ({ ...n, browser: v }))} />
-            </Row>
-            <Row label="Weekly digest" desc="Summary of activity every Monday">
-              <Toggle value={notifs.digest} onChange={(v) => setNotifs((n) => ({ ...n, digest: v }))} />
-            </Row>
-          </Section>
-
-          {/* Integrations */}
-          <Section title="Integrations">
-            <p className="text-xs text-surface-400 -mt-1 mb-2">Connect your tools to automatically sync documentation.</p>
-            <div className="space-y-2">
-              {integrations.map(({ icon: Icon, name, desc, connected }) => (
-                <div key={name} className="flex items-center gap-3 p-3.5 rounded-xl border border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600 transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center shrink-0">
-                    <Icon size={15} className="text-surface-600 dark:text-surface-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-surface-800 dark:text-surface-200">{name}</p>
-                    <p className="text-xs text-surface-400 truncate">{desc}</p>
-                  </div>
-                  {connected ? (
-                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                      <Check size={12} /> Connected
-                    </span>
-                  ) : (
-                    <button className="text-xs font-medium text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1">
-                      Connect <ChevronRight size={11} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Section>
-
-          {/* Danger zone */}
-          <Section title="Danger zone">
-            <Row label="Delete account" desc="Permanently delete your account and all data">
-              <button className="px-3.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-xs font-medium hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
-                Delete account
-              </button>
-            </Row>
           </Section>
         </div>
       </div>

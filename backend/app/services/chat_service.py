@@ -1,4 +1,4 @@
-from turtle import title
+import logging
 
 from app.services.search_service import SearchService
 from app.services.llm_service import LLMService
@@ -8,26 +8,27 @@ from sqlmodel import Session
 
 from app.db.models import Chat, Message
 
+logger = logging.getLogger(__name__)
+
 
 class ChatService:
 
     @staticmethod
-    def chat(question):
+    def chat(question, user_id: str):
 
-        results = SearchService.retrieve(question)
+        results = SearchService.retrieve(question, user_id)
 
         documents = results["documents"][0]
 
         context = "\n\n".join(documents)
+        logger.info(
+            "rag.context user_id=%s retrieved_chunks=%d context_characters=%d context_preview=%r",
+            user_id, len(documents), len(context), context[:500],
+        )
 
-        print("QUESTION:")
-        print(question)
-
-        print("\nCONTEXT:")
-        print(context)
         answer = LLMService.generate_response(
             question ,
-            context
+            context, user_id
         )
 
         return {
@@ -42,9 +43,12 @@ class ChatService:
     
 
     @staticmethod
-    def process_message(chat_id: int , question: str, session: Session):
+    def process_message(chat_id: int, question: str, session: Session, user_id: str):
 
         chat = session.get(Chat, chat_id)
+        if not chat or chat.user_id != user_id:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Chat not found")
 
     # Rename only if it's still the default title
         title = question.strip()
@@ -60,6 +64,7 @@ class ChatService:
 
         user_message = Message(
             chat_id = chat_id,
+            user_id=user_id,
             role= "user",
             content= question,
         )
@@ -67,15 +72,19 @@ class ChatService:
         session.add(user_message)
         session.commit()
 
-        results = SearchService.retrieve(question)
+        results = SearchService.retrieve(question, user_id)
 
         documents = results["documents"][0]
 
         context = "\n\n".join(documents)
+        logger.info(
+            "rag.context user_id=%s retrieved_chunks=%d context_characters=%d context_preview=%r",
+            user_id, len(documents), len(context), context[:500],
+        )
 
         answer = LLMService.generate_response(
             question ,
-            context
+            context, user_id
         )
 
         sources = list(
@@ -87,6 +96,7 @@ class ChatService:
 
         assistant_message = Message(
             chat_id= chat_id,
+            user_id=user_id,
             role="assistant",
             content=answer,
         )
