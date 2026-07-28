@@ -11,7 +11,11 @@ export function ChatSidebar() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    loadChats();
+    let active = true;
+    getChats()
+      .then((data) => { if (active) setChats(data); })
+      .catch((error) => console.error("Failed to load chats:", error));
+    return () => { active = false; };
   }, [chatId]);
 
   const loadChats = async () => {

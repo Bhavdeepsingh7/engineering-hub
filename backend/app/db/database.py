@@ -1,7 +1,5 @@
-import os
 from sqlmodel import SQLModel, create_engine
-
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///engineering_hub.db")
+from app.core.config import DATABASE_URL
 
 engine = create_engine(
     DATABASE_URL,

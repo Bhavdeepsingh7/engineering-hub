@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/data/chroma
+      - upload_data:/data/uploads
+
+volumes:
+  chroma_data:
+  upload_data:

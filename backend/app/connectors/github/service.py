@@ -13,6 +13,7 @@ import httpx
 from dotenv import load_dotenv
 from app.connectors.github.ingest import filter_files
 import tempfile
+import shutil
 from pathlib import Path
 from fastapi.responses import RedirectResponse
 from app.rag.vectorstore.chroma_store import get_collection
@@ -252,21 +253,20 @@ class GitHubService:
         
         files = await GitHubService.get_repository_tree(session, owner, repo, user_id)
 
-        documents = []
-
         temp_dir = tempfile.mkdtemp()
-
-        for file in files:
-
-            await GitHubService.process_file(
-                session=session,
-                owner= owner,
-                repo= repo ,
-                file= file,
-                access_token=connection.access_token,
-                temp_dir=temp_dir,
-                user_id=user_id,
-            )
+        try:
+            for file in files:
+                await GitHubService.process_file(
+                    session=session,
+                    owner=owner,
+                    repo=repo,
+                    file=file,
+                    access_token=connection.access_token,
+                    temp_dir=temp_dir,
+                    user_id=user_id,
+                )
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
         return{

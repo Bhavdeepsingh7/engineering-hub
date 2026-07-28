@@ -1,5 +1,4 @@
 from pathlib import Path
-import shutil
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -8,12 +7,12 @@ from sqlmodel import Session, select
 from app.core.auth import get_current_user_id
 from app.db.models import Document
 from app.db.session import get_session
+from app.core.config import MAX_UPLOAD_BYTES, UPLOAD_DIR
 from app.services.document_service import DocumentService
 from app.services.ingestion_service import IngestionService
 
 router = APIRouter()
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @router.post("/upload")
@@ -21,13 +20,31 @@ async def upload_file(file: UploadFile = File(...), session: Session = Depends(g
     filename = Path(file.filename or "upload").name
     if Path(filename).suffix.lower() not in {".pdf", ".txt", ".md", ".pptx"}:
         raise HTTPException(status_code=415, detail="Supported file types are PDF, TXT, Markdown, and PPTX")
+    if file.size is not None and file.size > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail=f"Files must be {MAX_UPLOAD_BYTES // (1024 * 1024)} MB or smaller")
+    existing_document = session.exec(select(Document).where(Document.user_id == user_id, Document.filename == filename)).first()
+    if existing_document:
+        raise HTTPException(status_code=409, detail="A document with this filename is already indexed. Delete it before uploading a replacement.")
+
     stored_filename = f"{user_id}_{uuid4().hex}_{filename}"
-    with open(UPLOAD_DIR / stored_filename, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    stored_path = UPLOAD_DIR / stored_filename
+    bytes_written = 0
+    try:
+        with stored_path.open("wb") as buffer:
+            while chunk := await file.read(1024 * 1024):
+                bytes_written += len(chunk)
+                if bytes_written > MAX_UPLOAD_BYTES:
+                    raise HTTPException(status_code=413, detail=f"Files must be {MAX_UPLOAD_BYTES // (1024 * 1024)} MB or smaller")
+                buffer.write(chunk)
+    except Exception:
+        stored_path.unlink(missing_ok=True)
+        raise
+    finally:
+        await file.close()
     try:
         result = IngestionService.ingest_document(stored_filename, user_id=user_id, source_name=filename)
-    except ValueError as exc:
-        (UPLOAD_DIR / stored_filename).unlink(missing_ok=True)
+    except (ValueError, OSError) as exc:
+        stored_path.unlink(missing_ok=True)
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     session.add(Document(user_id=user_id, filename=filename, stored_filename=stored_filename, chunk_count=result.get("chunks", 0)))
     session.commit()

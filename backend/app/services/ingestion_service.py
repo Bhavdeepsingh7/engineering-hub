@@ -5,6 +5,7 @@ from app.rag.loaders.document_loader import load_document
 from app.rag.chunking.text_chunker import chunk_text
 from app.rag.pipelines.ingestion_pipeline import ingest_chunks
 from app.rag.vectorstore.chroma_store import get_collection
+from app.core.config import UPLOAD_DIR
 
 
 class IngestionService:
@@ -12,7 +13,7 @@ class IngestionService:
     @staticmethod
     def ingest_document(filename: str, user_id: str, source_name: str | None = None):
 
-        file_path = Path("uploads")/filename
+        file_path = UPLOAD_DIR / filename
         text = load_document(str(file_path))
         if not text or not text.strip():
             raise ValueError("No extractable text was found in the uploaded document")

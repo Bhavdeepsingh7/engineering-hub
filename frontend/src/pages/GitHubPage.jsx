@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Download, CheckCircle } from "lucide-react";
 import { TopBar } from "../components/layout/TopBar";
 import { getGitHubStatus , getGitHubLoginUrl, getRepositories, importRepository, syncRepository, removeRepository, getImportedRepositories } from "../services/githubservice";
 
@@ -16,23 +15,27 @@ export function GitHubPage() {
     const [repoToRemove, setRepoToRemove] = useState(null);
 
     useEffect(() => {
-        loadStatus();
+        let active = true;
+
+        const loadInitialGitHubState = async () => {
+            try {
+                const connection = await getGitHubStatus();
+                if (!active) return;
+                setStatus(connection);
+                if (!connection.connected) return;
+
+                const [repos, imported] = await Promise.all([getRepositories(), getImportedRepositories()]);
+                if (!active) return;
+                setRepositories(repos);
+                setImportedRepos(new Set(imported.map((repo) => `${repo.owner}/${repo.repo}`)));
+            } catch (error) {
+                console.error("Failed to load GitHub state", error);
+            }
+        };
+
+        loadInitialGitHubState();
+        return () => { active = false; };
     }, []);
-
-    useEffect(() => {
-        loadGitHub();
-    },[]);
-
-
-    const loadStatus = async () => {
-        try{
-            const data = await getGitHubStatus();
-            setStatus(data);
-        } catch  (err){
-            console.error(err);
-        }
-    }
-
 
     const handleConnect = async () => {
         try{
@@ -51,18 +54,6 @@ export function GitHubPage() {
             setRepositories(data);
         } catch (err){
             console.error(err);
-        }
-    };
-
-    const loadGitHub = async () => {
-        const status = await getGitHubStatus();
-
-        setStatus(status);
-        if(status.connected){
-            await Promise.all([
-                loadRepositories(),
-                loadImportedRepositories(),
-            ])
         }
     };
 

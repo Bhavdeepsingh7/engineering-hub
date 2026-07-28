@@ -25,16 +25,18 @@ export const importRepository = async (owner , repo) => {
 }
 
 
-export const syncRepository = (owner , repo) => {
-    API.post(
+export const syncRepository = async (owner , repo) => {
+    const response = await API.post(
         `/github/repos/${owner}/${repo}/sync`
     );
+    return response.data;
 }
 
-export const removeRepository = (owner, repo) => {
-    API.delete(
+export const removeRepository = async (owner, repo) => {
+    const response = await API.delete(
         `/github/repos/${owner}/${repo}`
     );
+    return response.data;
 }
 
 export const getImportedRepositories = async () => {

@@ -2,6 +2,7 @@ from typing import Optional
 from datetime import datetime
 
 from sqlmodel import SQLModel , Field
+from sqlalchemy import Column, ForeignKey, UniqueConstraint
 
 class Chat(SQLModel, table = True):
     id: Optional[int] = Field(default=None, primary_key = True)
@@ -17,7 +18,7 @@ class Chat(SQLModel, table = True):
 class Message(SQLModel , table = True):
     id: Optional[int] = Field(default=None, primary_key = True)
 
-    chat_id: int = Field(foreign_key="chat.id")
+    chat_id: int = Field(sa_column=Column(ForeignKey("chat.id", ondelete="CASCADE"), nullable=False))
     user_id: str = Field(index=True)
 
     role: str
@@ -39,6 +40,7 @@ class GitHubConnection(SQLModel , table = True):
     created_at: datetime = Field(default_factory= datetime.utcnow)
 
 class APIKey(SQLModel, table = True):
+    __table_args__ = (UniqueConstraint("user_id", "provider", name="uq_api_key_user_provider"),)
     id: int | None = Field(default=None, primary_key= True)
 
     provider: str
@@ -48,6 +50,7 @@ class APIKey(SQLModel, table = True):
 
 
 class GitHubIndexedFile(SQLModel, table=True):
+    __table_args__ = (UniqueConstraint("user_id", "owner", "repo", "path", name="uq_github_indexed_file"),)
     id: int | None = Field(default =None, primary_key = True)
 
     owner: str

@@ -47,16 +47,6 @@ export function SettingsPage() {
   const profileName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
   const profileEmail = user?.primaryEmailAddress?.emailAddress || "";
 
-
-  const loadGeminiStatus = async () => {
-    try{
-      const data = await getApiKeyStatus("gemini");
-      setConfigured(data.configured);
-    }catch(err){
-      console.error(err);
-    }
-  }
-
   const handleSaveGeminiKey = async () => {
     try {
 

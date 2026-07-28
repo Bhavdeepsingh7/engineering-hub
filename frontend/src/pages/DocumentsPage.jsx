@@ -1,5 +1,5 @@
 import { useState,useEffect } from "react";
-import { FileText, Search, Filter } from "lucide-react";
+import { FileText, Search } from "lucide-react";
 import { TopBar } from "../components/layout/TopBar";
 import { UploadZone } from "../components/documents/UploadZone";
 import { DocumentRow } from "../components/documents/DocumentRow";
@@ -11,10 +11,6 @@ export function DocumentsPage() {
   const [query, setQuery] = useState("");
   const [uploading, setUploading] = useState(false);
 
-
-  useEffect(() => {
-    loadDocuments();
-  }, []);
 
   const loadDocuments = async () => {
     try{
@@ -31,6 +27,17 @@ export function DocumentsPage() {
       console.error("failed to load documents", error);
     }
   }
+
+  useEffect(() => {
+    let active = true;
+    getDocument()
+      .then((data) => {
+        if (!active) return;
+        setDocs(data.map((doc, index) => ({ id: index, name: doc.filename, status: "indexed" })));
+      })
+      .catch((error) => console.error("failed to load documents", error));
+    return () => { active = false; };
+  }, []);
 
   const filtered = docs.filter((d) =>
     d.name.toLowerCase().includes(query.toLowerCase())

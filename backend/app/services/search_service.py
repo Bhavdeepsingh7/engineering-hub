@@ -1,4 +1,3 @@
-import hashlib
 import logging
 
 from app.rag.embeddings.gemini_embeddings import get_embedding_model
@@ -16,9 +15,8 @@ class SearchService:
         collection = get_collection()
         where = {"user_id": user_id}
         logger.info(
-            "rag.retrieval.query collection=%s user_id=%s question=%r embedding_dimensions=%d embedding_sha256=%s n_results=%d where=%s",
-            collection.name, user_id, query, len(query_embedding),
-            hashlib.sha256(str(query_embedding).encode("utf-8")).hexdigest()[:12], 3, where,
+            "rag.retrieval.query collection=%s user_id=%s embedding_dimensions=%d n_results=%d where=%s",
+            collection.name, user_id, len(query_embedding), 3, where,
         )
 
         results = collection.query(

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Send, Paperclip, Zap, MessageSquare, ArrowUp } from "lucide-react";
+import { Paperclip, Zap, MessageSquare, ArrowUp } from "lucide-react";
 import { ChatSidebar } from "../components/chat/ChatSidebar";
 import { MessageBubble } from "../components/chat/MessageBubble";
 import { TypingIndicator } from "../components/chat/TypingIndicator";
@@ -8,7 +8,6 @@ import { TypingIndicator } from "../components/chat/TypingIndicator";
 // import { sendMessage } from "../services/api";
 import { askQuestion, createChat, getChat } from "../services/chatService";
 import { getDocument } from "../services/documentService";
-import { Trash2 } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 
 const SUGGESTIONS = [
@@ -30,23 +29,16 @@ export function ChatPage() {
   const inputRef = useRef(null);
   const isNew = !chatId || chatId === "new";
 
-const loadMessages = async (chatId) => {
-  try{
-    const chat = await getChat(chatId);
-
-    setMessages(chat.messages);
-  } catch(err) {
-    console.error(err);
-  }
-}
-
-
 useEffect(() => {
     if (!chatId || chatId === "new") {
-        setMessages([]);
-        return;
+        const clearMessages = window.setTimeout(() => setMessages([]), 0);
+        return () => window.clearTimeout(clearMessages);
     }
-    loadMessages(chatId);
+    let active = true;
+    getChat(chatId)
+      .then((chat) => { if (active) setMessages(chat.messages); })
+      .catch((error) => console.error("Failed to load chat", error));
+    return () => { active = false; };
 }, [chatId]);
 
   useEffect(() => {

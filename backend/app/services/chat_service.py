@@ -22,8 +22,8 @@ class ChatService:
 
         context = "\n\n".join(documents)
         logger.info(
-            "rag.context user_id=%s retrieved_chunks=%d context_characters=%d context_preview=%r",
-            user_id, len(documents), len(context), context[:500],
+            "rag.context user_id=%s retrieved_chunks=%d context_characters=%d",
+            user_id, len(documents), len(context),
         )
 
         answer = LLMService.generate_response(
@@ -78,8 +78,8 @@ class ChatService:
 
         context = "\n\n".join(documents)
         logger.info(
-            "rag.context user_id=%s retrieved_chunks=%d context_characters=%d context_preview=%r",
-            user_id, len(documents), len(context), context[:500],
+            "rag.context user_id=%s retrieved_chunks=%d context_characters=%d",
+            user_id, len(documents), len(context),
         )
 
         answer = LLMService.generate_response(

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Upload, FileText, AlertCircle } from "lucide-react";
+import { Upload, AlertCircle } from "lucide-react";
 
 const ACCEPTED = [".pdf", ".txt", ".md", ".pptx"];
 
