@@ -6,6 +6,19 @@ from  app.db.models import APIKey
 class APIKeyService:
 
     @staticmethod
+    def has_valid_api_key(user_id: str, provider: str) -> bool:
+        """Return whether a user has a non-blank key for the provider."""
+        with Session(engine) as session:
+            key = session.exec(
+                select(APIKey).where(
+                    APIKey.provider == provider,
+                    APIKey.user_id == user_id,
+                )
+            ).first()
+
+        return bool(key and key.api_key and key.api_key.strip())
+
+    @staticmethod
     def get_available_api_keys(user_id: str, providers: tuple[str, ...]) -> dict[str, str]:
         """Return the configured model-provider keys for one authenticated user."""
         with Session(engine) as session:

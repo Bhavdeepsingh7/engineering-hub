@@ -3,12 +3,14 @@ import time
 import uuid
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from app.api.routes import health, documents, search, chat, chats, settings, dashboard
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.connectors.github.router import router as github_router
 
 from app.core.config import CORS_ORIGINS, UPLOAD_DIR, validate_startup_configuration
+from app.core.errors import NoAPIKeyConfiguredError
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -17,6 +19,14 @@ app = FastAPI(
     title="Engineering Intelligence Hub",
     version="1.0.0",
 )
+
+
+@app.exception_handler(NoAPIKeyConfiguredError)
+async def no_api_key_error_handler(_request: Request, exc: NoAPIKeyConfiguredError):
+    return JSONResponse(
+        status_code=400,
+        content={"error": exc.error, "message": exc.message},
+    )
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):

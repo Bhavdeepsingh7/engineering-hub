@@ -11,6 +11,8 @@ router = APIRouter(prefix="/chats", tags=["Chats"])
 
 @router.post("/")
 def create_chat(session: Session = Depends(get_session), user_id: str = Depends(get_current_user_id)):
+    ChatService.ensure_gemini_api_key(user_id)
+
     chat = Chat(
         title="New Chat", user_id=user_id
     )

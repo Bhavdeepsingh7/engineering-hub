@@ -23,6 +23,7 @@ export function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [noApiKey, setNoApiKey] = useState(false);
   const [documentCount, setDocumentCount] = useState(null);
   const { user } = useUser();
   const bottomRef = useRef(null);
@@ -61,28 +62,29 @@ useEffect(() => {
   const handleSend = async () => {
     const text = input.trim();
     if (!text || loading) return;
-    setInput("");
-
-    const userMsg = {
-      id: `u-${Date.now()}`,
-      role: "user",
-      content: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setLoading(true);
+    setNoApiKey(false);
+    let userMsg;
 
     try {
       let currentChatId = chatId;
+      let createdNewChat = false;
 
-    if (!currentChatId || currentChatId === "new") {
-    const chat = await createChat();
+      if (!currentChatId || currentChatId === "new") {
+        const chat = await createChat();
+        currentChatId = chat.id;
+        createdNewChat = true;
+      }
 
-    currentChatId = chat.id;
+      userMsg = {
+        id: `u-${Date.now()}`,
+        role: "user",
+        content: text,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
 
-    navigate(`/chat/${chat.id}`);
-}
+      setInput("");
+      setMessages((prev) => [...prev, userMsg]);
+      setLoading(true);
 
       const result = await askQuestion(currentChatId, text);
       const aiMsg = {
@@ -93,8 +95,15 @@ useEffect(() => {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, aiMsg]);
+      if (createdNewChat) navigate(`/chat/${currentChatId}`);
     } catch (e) {
       console.error(e);
+      if (e.response?.data?.error === "NO_API_KEY") {
+        setNoApiKey(true);
+        if (userMsg) {
+          setMessages((prev) => prev.filter((message) => message.id !== userMsg.id));
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -142,7 +151,14 @@ useEffect(() => {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-6 space-y-5">
-          {messages.length === 0 && isNew ? (
+          {noApiKey && (
+            <div className="mx-auto max-w-lg rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-center dark:border-amber-900/70 dark:bg-amber-950/30">
+              <p className="text-sm font-semibold text-surface-900 dark:text-surface-100">No API key configured.</p>
+              <p className="mt-1 text-sm text-surface-600 dark:text-surface-300">Please add your Gemini API key in Settings before starting a conversation.</p>
+              <button onClick={() => navigate("/settings")} className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Go to Settings</button>
+            </div>
+          )}
+          {messages.length === 0 && isNew && !noApiKey ? (
             <div className="flex flex-col items-center justify-center h-full text-center animate-fade-in">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center mb-5 shadow-lg shadow-brand-600/30">
                 <MessageSquare size={24} className="text-white" />
