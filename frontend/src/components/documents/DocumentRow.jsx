@@ -6,7 +6,7 @@ const icons = { pdf: File, md: FileText, txt: FileText };
 export function DocumentRow({ doc, onDelete }) {
   const Icon = icons[doc.type] || FileText;
   return (
-    <div className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-50 dark:hover:bg-surface-800/50 group transition-all border border-transparent hover:border-surface-200 dark:hover:border-surface-700">
+    <div className="group flex flex-wrap items-center gap-3 rounded-xl border border-transparent px-3 py-3 transition-all hover:border-surface-200 hover:bg-surface-50 dark:hover:border-surface-700 dark:hover:bg-surface-800/50 sm:flex-nowrap sm:gap-4 sm:px-4">
       <div className="w-9 h-9 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center shrink-0">
         <Icon size={16} className="text-brand-500" />
       </div>
@@ -23,7 +23,8 @@ export function DocumentRow({ doc, onDelete }) {
       </Badge>
       <button
         onClick={() => onDelete(doc)}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-surface-300 dark:text-surface-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all"
+        aria-label={`Delete ${doc.name}`}
+        className="ml-auto flex h-11 w-11 items-center justify-center rounded-lg text-surface-400 transition-all hover:bg-red-50 hover:text-red-500 dark:text-surface-600 dark:hover:bg-red-900/20 sm:h-9 sm:w-9 sm:opacity-0 sm:group-hover:opacity-100"
       >
         <Trash2 size={14} />
       </button>

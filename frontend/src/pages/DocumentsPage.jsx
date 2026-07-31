@@ -84,7 +84,7 @@ export function DocumentsPage() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <TopBar title="Documents" subtitle={`${docs.length} files indexed`} />
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
         <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
 
           {/* Upload zone */}
@@ -108,16 +108,16 @@ export function DocumentsPage() {
 
           {/* Document list */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
               <h2 className="text-sm font-semibold text-surface-700 dark:text-surface-300">Your documents</h2>
               <div className="flex-1" />
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-700">
+              <div className="flex w-full items-center gap-2 rounded-lg border border-surface-200 bg-white px-3 py-1.5 dark:border-surface-700 dark:bg-surface-900 sm:w-auto">
                 <Search size={13} className="text-surface-400 shrink-0" />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search documents…"
-                  className="text-xs bg-transparent text-surface-700 dark:text-surface-300 placeholder-surface-400 outline-none w-36"
+                  className="w-full bg-transparent text-xs text-surface-700 outline-none placeholder-surface-400 dark:text-surface-300 sm:w-36"
                 />
               </div>
             </div>
@@ -131,7 +131,7 @@ export function DocumentsPage() {
             ) : (
               <div className="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl overflow-hidden">
                 {/* Table header */}
-                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-2.5 border-b border-surface-100 dark:border-surface-800 bg-surface-50 dark:bg-surface-950/50">
+                <div className="hidden grid-cols-[1fr_auto] gap-4 border-b border-surface-100 bg-surface-50 px-4 py-2.5 dark:border-surface-800 dark:bg-surface-950/50 sm:grid">
                   <p className="text-xs font-medium text-surface-400 uppercase tracking-wider">File</p>
                   <p className="text-xs font-medium text-surface-400 uppercase tracking-wider">Status</p>
                   <p className="text-xs font-medium text-surface-400 uppercase tracking-wider w-7" />

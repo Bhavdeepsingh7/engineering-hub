@@ -8,9 +8,9 @@ export function Button({ children, variant = "primary", size = "md", className =
     outline: "border border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-800 focus:ring-surface-300",
   };
   const sizes = {
-    sm: "text-xs px-3 py-1.5",
-    md: "text-sm px-4 py-2",
-    lg: "text-sm px-5 py-2.5",
+    sm: "min-h-11 text-xs px-3 py-1.5",
+    md: "min-h-11 text-sm px-4 py-2",
+    lg: "min-h-11 text-sm px-5 py-2.5",
   };
   return (
     <button

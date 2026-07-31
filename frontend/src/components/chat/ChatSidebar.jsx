@@ -1,9 +1,9 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { MessageSquare, Search, Plus, Trash2 } from "lucide-react";
+import { MessageSquare, Search, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getChats, deleteChat } from "../../services/chatService";
 
-export function ChatSidebar() {
+export function ChatSidebar({ open = false, onClose = () => {} }) {
   const navigate = useNavigate();
   const { chatId } = useParams();
 
@@ -49,14 +49,17 @@ export function ChatSidebar() {
   );
 
   return (
-    <div className="w-64 shrink-0 flex flex-col border-r border-surface-200 dark:border-surface-800 bg-surface-50 dark:bg-surface-900">
+    <>
+      {open && <button aria-label="Close chat history" onClick={onClose} className="fixed inset-0 z-40 bg-black/40 xl:hidden" />}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] -translate-x-full flex-col border-r border-surface-200 bg-surface-50 transition-transform duration-200 dark:border-surface-800 dark:bg-surface-900 xl:static xl:z-auto xl:w-64 xl:max-w-none xl:translate-x-0 ${open ? "translate-x-0" : ""}`}>
 
       {/* Header */}
       <div className="p-3 border-b border-surface-200 dark:border-surface-800">
+        <div className="mb-2 flex items-center justify-between xl:hidden"><span className="text-sm font-semibold">Chat history</span><button onClick={onClose} aria-label="Close chat history" className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800"><X size={18} /></button></div>
 
         <button
-          onClick={() => navigate("/chat/new")}
-          className="w-full mb-3 flex items-center justify-center gap-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white py-2 text-sm font-medium transition"
+          onClick={() => { navigate("/chat/new"); onClose(); }}
+          className="mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
         >
           <Plus size={16} />
           New Chat
@@ -92,7 +95,7 @@ export function ChatSidebar() {
             return (
               <button
                 key={chat.id}
-                onClick={() => navigate(`/chat/${chat.id}`)}
+                onClick={() => { navigate(`/chat/${chat.id}`); onClose(); }}
                 className={`group w-full text-left rounded-xl p-3 mb-2 transition-all duration-200 ${
                   active
                     ? "bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 shadow-sm"
@@ -123,7 +126,7 @@ export function ChatSidebar() {
                           e.stopPropagation();
                           handleDelete(chat.id);
                         }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="flex h-9 w-9 items-center justify-center opacity-100 transition-opacity xl:opacity-0 xl:group-hover:opacity-100"
                       >
                         <Trash2
                           size={14}
@@ -149,6 +152,7 @@ export function ChatSidebar() {
           })
         )}
       </div>
-    </div>
+      </aside>
+    </>
   );
 }

@@ -27,7 +27,7 @@ export function UploadZone({ onUpload }) {
       onDragLeave={() => setDragging(false)}
       onDrop={(e) => { e.preventDefault(); setDragging(false); validate(e.dataTransfer.files); }}
       onClick={() => inputRef.current.click()}
-      className={`group cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-all duration-200 ${
+      className={`group cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-all duration-200 sm:p-10 ${
         dragging
           ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20"
           : "border-surface-200 dark:border-surface-700 hover:border-brand-400 hover:bg-surface-50 dark:hover:bg-surface-800/50"

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Paperclip, Zap, MessageSquare, ArrowUp } from "lucide-react";
+import { Paperclip, Zap, MessageSquare, ArrowUp, Menu, PanelLeft } from "lucide-react";
 import { ChatSidebar } from "../components/chat/ChatSidebar";
 import { MessageBubble } from "../components/chat/MessageBubble";
 import { TypingIndicator } from "../components/chat/TypingIndicator";
@@ -9,6 +9,7 @@ import { TypingIndicator } from "../components/chat/TypingIndicator";
 import { askQuestion, createChat, getChat } from "../services/chatService";
 import { getDocument } from "../services/documentService";
 import { useUser } from "@clerk/clerk-react";
+import { useLayout } from "../components/layout/LayoutContext";
 
 const SUGGESTIONS = [
   "How does JWT token refresh work?",
@@ -24,11 +25,19 @@ export function ChatPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [noApiKey, setNoApiKey] = useState(false);
+  const [chatHistoryOpen, setChatHistoryOpen] = useState(false);
   const [documentCount, setDocumentCount] = useState(null);
   const { user } = useUser();
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const isNew = !chatId || chatId === "new";
+  const { openNavigation } = useLayout();
+
+  useEffect(() => {
+    if (!chatHistoryOpen) return undefined;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, [chatHistoryOpen]);
 
 useEffect(() => {
     if (!chatId || chatId === "new") {
@@ -117,18 +126,20 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex h-full overflow-hidden">
-      <ChatSidebar />
+    <div className="flex h-full min-w-0 overflow-hidden">
+      <ChatSidebar open={chatHistoryOpen} onClose={() => setChatHistoryOpen(false)} />
 
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-surface-950">
         {/* Header */}
-        <div className="h-14 flex items-center justify-between px-5 border-b border-surface-200 dark:border-surface-800 shrink-0">
+        <div className="flex min-h-14 items-center justify-between gap-2 border-b border-surface-200 px-3 dark:border-surface-800 sm:px-5 shrink-0">
           <div className="flex items-center gap-2.5">
+            <button onClick={openNavigation} aria-label="Open navigation" className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 lg:hidden"><Menu size={19} /></button>
+            <button onClick={() => setChatHistoryOpen(true)} aria-label="Open chat history" className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 xl:hidden"><PanelLeft size={19} /></button>
             <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
               <Zap size={12} className="text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="text-sm font-semibold text-surface-900 dark:text-surface-50 leading-none">
                 {isNew ? "New conversation" : `Chat #${chatId}`}
               </h1>
@@ -150,12 +161,12 @@ useEffect(() => {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-6 space-y-5">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto px-3 py-4 space-y-5 sm:px-5 sm:py-6">
           {noApiKey && (
             <div className="mx-auto max-w-lg rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-center dark:border-amber-900/70 dark:bg-amber-950/30">
               <p className="text-sm font-semibold text-surface-900 dark:text-surface-100">No API key configured.</p>
               <p className="mt-1 text-sm text-surface-600 dark:text-surface-300">Please add your Gemini API key in Settings before starting a conversation.</p>
-              <button onClick={() => navigate("/settings")} className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Go to Settings</button>
+              <button onClick={() => navigate("/settings")} className="mt-4 min-h-11 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Go to Settings</button>
             </div>
           )}
           {messages.length === 0 && isNew && !noApiKey ? (
@@ -167,12 +178,12 @@ useEffect(() => {
               <p className="text-sm text-surface-400 max-w-sm mb-8">
                 Ask anything about your engineering documentation, architecture, or code.
               </p>
-              <div className="grid sm:grid-cols-2 gap-2 w-full max-w-lg">
+              <div className="grid w-full max-w-lg gap-2 sm:grid-cols-2">
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}
                     onClick={() => setInput(s)}
-                    className="text-left px-4 py-3 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 text-xs text-surface-600 dark:text-surface-400 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50 dark:hover:bg-brand-950/30 hover:text-brand-700 dark:hover:text-brand-300 transition-all"
+                    className="min-h-11 text-left px-4 py-3 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 text-xs text-surface-600 dark:text-surface-400 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-brand-50 dark:hover:bg-brand-950/30 hover:text-brand-700 dark:hover:text-brand-300 transition-all"
                   >
                     {s}
                   </button>
@@ -191,9 +202,9 @@ useEffect(() => {
         </div>
 
         {/* Input area */}
-        <div className="px-5 py-4 border-t border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-950">
+        <div className="border-t border-surface-200 bg-white px-3 py-3 dark:border-surface-800 dark:bg-surface-950 sm:px-5 sm:py-4">
           <div className="relative flex items-end gap-2 bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-2xl px-4 py-3 focus-within:border-brand-400 dark:focus-within:border-brand-600 focus-within:ring-2 focus-within:ring-brand-100 dark:focus-within:ring-brand-950/50 transition-all">
-            <button className="text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 transition-colors shrink-0 mb-0.5">
+            <button aria-label="Attach file" className="flex h-11 w-11 items-center justify-center text-surface-400 transition-colors hover:text-surface-600 dark:hover:text-surface-300 shrink-0">
               <Paperclip size={16} />
             </button>
             <textarea
@@ -213,7 +224,7 @@ useEffect(() => {
             <button
               onClick={handleSend}
               disabled={!input.trim() || loading}
-              className="w-8 h-8 rounded-xl flex items-center justify-center bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0 hover:scale-105 active:scale-95 shadow-sm"
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm transition-all hover:scale-105 hover:bg-brand-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 shrink-0"
             >
               {loading ? (
                 <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />

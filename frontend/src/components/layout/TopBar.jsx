@@ -1,34 +1,39 @@
-import { Sun, Moon, Bell, LogOut, Settings, User } from "lucide-react";
+import { Sun, Moon, Bell, LogOut, Settings, User, Menu } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 import { useState } from "react";
 import { useUser, useClerk } from "@clerk/clerk-react";
 import { Link } from "react-router-dom";
+import { useLayout } from "./LayoutContext";
 
 export function TopBar({ title, subtitle }) {
   const { theme, toggleTheme } = useTheme();
   const { user } = useUser();
   const { signOut } = useClerk();
   const [open, setOpen] = useState(false);
+  const { openNavigation } = useLayout();
   return (
-    <header className="h-14 flex items-center justify-between px-6 border-b border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-950">
-      <div>
-        <h1 className="text-sm font-semibold text-surface-900 dark:text-surface-50">{title}</h1>
-        {subtitle && <p className="text-xs text-surface-400">{subtitle}</p>}
+    <header className="flex min-h-14 items-center justify-between gap-2 border-b border-surface-200 bg-white px-3 dark:border-surface-800 dark:bg-surface-950 sm:px-6">
+      <div className="flex min-w-0 items-center gap-1">
+        <button onClick={openNavigation} aria-label="Open navigation" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 lg:hidden"><Menu size={19} /></button>
+        <div className="min-w-0">
+          <h1 className="truncate text-sm font-semibold text-surface-900 dark:text-surface-50">{title}</h1>
+          {subtitle && <p className="truncate text-xs text-surface-400">{subtitle}</p>}
+        </div>
       </div>
       <div className="flex items-center gap-1">
         <button
           onClick={toggleTheme}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-all"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-surface-400 transition-all hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
           title="Toggle theme"
         >
           {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
         </button>
-        <button className="w-8 h-8 rounded-lg flex items-center justify-center text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 transition-all relative">
+        <button aria-label="Notifications" className="relative flex h-11 w-11 items-center justify-center rounded-lg text-surface-400 transition-all hover:bg-surface-100 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200">
           <Bell size={15} />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-brand-500 rounded-full" />
         </button>
         <div className="relative ml-2">
-          <button onClick={() => setOpen((value) => !value)} className="flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-surface-100 dark:hover:bg-surface-800">
+          <button onClick={() => setOpen((value) => !value)} className="flex min-h-11 items-center gap-2 rounded-lg px-1 py-1 hover:bg-surface-100 dark:hover:bg-surface-800">
             <img className="h-7 w-7 rounded-full" src={user?.imageUrl} alt="User avatar" />
             <span className="hidden sm:block max-w-32 truncate text-xs font-medium text-surface-700 dark:text-surface-200">{user?.fullName || user?.primaryEmailAddress?.emailAddress}</span>
           </button>

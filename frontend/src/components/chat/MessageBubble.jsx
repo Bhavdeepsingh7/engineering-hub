@@ -24,8 +24,8 @@ export function MessageBubble({ message }) {
   if (isUser) {
     return (
       <div className="flex justify-end animate-slide-up">
-        <div className="max-w-[72%] bg-brand-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm">
-          <p className="text-sm leading-relaxed">{message.content}</p>
+        <div className="max-w-[88%] break-words bg-brand-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm sm:max-w-[72%]">
+          <p className="text-sm leading-relaxed [overflow-wrap:anywhere]">{message.content}</p>
           <p className="text-xs text-brand-200 mt-1 text-right">{message.timestamp}</p>
         </div>
       </div>

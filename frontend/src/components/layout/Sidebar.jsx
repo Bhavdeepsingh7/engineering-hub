@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FileText, MessageSquare, Settings, Zap, ChevronRight, Plus } from "lucide-react";
+import { LayoutDashboard, FileText, MessageSquare, Settings, Zap, ChevronRight, Plus, X } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 
 const navItems = [
@@ -10,7 +10,7 @@ const navItems = [
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
-export function Sidebar() {
+export function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
   const { user } = useUser();
   const displayName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
@@ -20,14 +20,22 @@ export function Sidebar() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+  const closeAndNavigate = (to) => {
+    navigate(to);
+    onClose();
+  };
+
   return (
-    <aside className="w-60 shrink-0 h-screen flex flex-col bg-surface-50 dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800">
+    <>
+      {open && <button aria-label="Close navigation" onClick={onClose} className="fixed inset-0 z-40 bg-black/40 lg:hidden" />}
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] -translate-x-full flex-col border-r border-surface-200 bg-surface-50 transition-transform duration-200 dark:border-surface-800 dark:bg-surface-900 lg:static lg:z-auto lg:w-60 lg:max-w-none lg:translate-x-0 ${open ? "translate-x-0" : ""}`}>
       {/* Logo */}
       <div className="px-4 py-5 border-b border-surface-200 dark:border-surface-800">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center shadow-sm">
             <Zap size={16} className="text-white" />
           </div>
+          <button aria-label="Close navigation" onClick={onClose} className="ml-auto flex h-11 w-11 items-center justify-center rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 lg:hidden"><X size={18} /></button>
           <div>
             <span className="text-sm font-semibold text-surface-900 dark:text-surface-50 leading-none block">EI Hub</span>
             <span className="text-xs text-surface-400 dark:text-surface-500">Engineering Intelligence</span>
@@ -38,8 +46,8 @@ export function Sidebar() {
       {/* New Chat CTA */}
       <div className="px-3 pt-4">
         <button
-          onClick={() => navigate("/chat/new")}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/30 hover:bg-brand-100 dark:hover:bg-brand-950/50 transition-colors duration-150"
+          onClick={() => closeAndNavigate("/chat/new")}
+          className="flex min-h-11 w-full items-center gap-2 rounded-lg bg-brand-50 px-3 py-2 text-sm font-medium text-brand-600 transition-colors duration-150 hover:bg-brand-100 dark:bg-brand-950/30 dark:text-brand-400 dark:hover:bg-brand-950/50"
         >
           <Plus size={15} />
           New Chat
@@ -52,8 +60,9 @@ export function Sidebar() {
           <NavLink
             key={to}
             to={to}
+            onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 group ${
+              `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 group ${
                 isActive
                   ? "bg-white dark:bg-surface-800 text-brand-600 dark:text-brand-400 shadow-sm border border-surface-200 dark:border-surface-700"
                   : "text-surface-600 dark:text-surface-400 hover:bg-white dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-200"
@@ -86,6 +95,7 @@ export function Sidebar() {
           </div>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

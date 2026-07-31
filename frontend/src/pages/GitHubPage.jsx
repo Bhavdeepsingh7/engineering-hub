@@ -146,24 +146,24 @@ export function GitHubPage() {
                 subtitle="Connect and import repositories"
             />
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
 
                 <div className="max-w-5xl mx-auto space-y-6">
 
                     {/* Connection Card */}
 
-                    <div className="bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800 p-6">
+                    <div className="rounded-2xl border border-surface-200 bg-white p-4 dark:border-surface-800 dark:bg-surface-900 sm:p-6">
 
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-                            <div className="flex items-center gap-4">
+                            <div className="flex min-w-0 items-center gap-4">
 {/* 
                                 <Github
                                     size={32}
                                     className="text-surface-700 dark:text-surface-300"
                                 /> */}
 
-                                <div>
+                                <div className="min-w-0">
 
                                     <h2 className="text-lg font-semibold">
                                         GitHub
@@ -177,13 +177,13 @@ export function GitHubPage() {
 
                             </div>
                             {status?.connected ? (
-                                <div className="flex items-center gap-2 text-green-500">
+                                <div className="break-all text-sm text-green-500 sm:text-base">
                                     connected as <b>{status.github_username}</b>
                                 </div>
                             ) : (
                                 <button
                                     onClick ={handleConnect}
-                                    className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white"
+                                    className="min-h-11 w-full rounded-xl bg-brand-600 px-4 py-2 text-white hover:bg-brand-700 sm:w-auto"
                                 >
                                     Connect GitHub
                                 </button>
@@ -197,7 +197,7 @@ export function GitHubPage() {
 
                     <div className="bg-white dark:bg-surface-900 rounded-2xl border border-surface-200 dark:border-surface-800">
 
-                        <div className="p-5 border-b border-surface-200 dark:border-surface-800">
+                        <div className="p-4 border-b border-surface-200 dark:border-surface-800 sm:p-5">
 
                             <h2 className="font-semibold">
                                 Repositories
@@ -211,12 +211,12 @@ export function GitHubPage() {
 
         <div
             key={repo.id}
-            className="flex items-center justify-between p-4 border rounded-xl"
+            className="flex flex-col gap-3 border p-4 sm:flex-row sm:items-center sm:justify-between"
         >
 
-            <div>
+            <div className="min-w-0">
 
-                <h3 className="font-medium">
+                <h3 className="truncate font-medium">
                     {repo.name}
                 </h3>
 
@@ -228,12 +228,12 @@ export function GitHubPage() {
 
 {importedRepos.has(`${status.github_username}/${repo.name}`) ? (
 
-<div className="flex gap-2">
+<div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap">
 
     <button
         onClick={() => handleSync(status.github_username, repo.name)}
         disabled={syncingRepo === repo.name}
-        className="px-4 py-2 rounded-lg bg-brand-600 text-white"
+        className="min-h-11 flex-1 rounded-lg bg-brand-600 px-4 py-2 text-white sm:flex-none"
     >
         {syncingRepo === repo.name
             ? "Syncing..."
@@ -243,7 +243,7 @@ export function GitHubPage() {
     <button
         onClick={() => setRepoToRemove(repo)}
         disabled={removingRepo === repoToRemove?.name}
-        className="px-4 py-2 rounded-lg bg-red-500 text-white"
+        className="min-h-11 flex-1 rounded-lg bg-red-500 px-4 py-2 text-white sm:flex-none"
     >
         {removingRepo === repoToRemove?.name
             ? "Removing..."
@@ -257,7 +257,7 @@ export function GitHubPage() {
     <button
         onClick={() => handleImport(repo)}
         disabled={importing === repo.id}
-        className="px-4 py-2 rounded-lg bg-brand-600 text-white"
+        className="min-h-11 w-full rounded-lg bg-brand-600 px-4 py-2 text-white sm:w-auto"
     >
         {importing === repo.id ? "Importing..." : "Import"}
     </button>
@@ -276,9 +276,9 @@ export function GitHubPage() {
             </div>
 
 {repoToRemove && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4">
 
-        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-surface-900 p-6 shadow-xl">
+        <div role="dialog" aria-modal="true" className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-xl dark:bg-surface-900 sm:p-6">
 
             <h2 className="text-lg font-semibold">
                 Remove Repository
@@ -293,11 +293,11 @@ export function GitHubPage() {
 </p>
 
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 
                 <button
                     onClick={() => setRepoToRemove(null)}
-                    className="px-4 py-2 rounded-lg border"
+                    className="min-h-11 w-full rounded-lg border px-4 py-2 sm:w-auto"
                 >
                     Cancel
                 </button>
@@ -313,7 +313,7 @@ export function GitHubPage() {
                         setRepoToRemove(null);
 
                     }}
-                    className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                    className="min-h-11 w-full rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 sm:w-auto"
                 >
                      {removingRepo === repoToRemove?.name
             ? "Removing..."
