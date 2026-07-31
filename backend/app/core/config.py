@@ -16,7 +16,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///engineering_hub.db")
 CHROMA_PATH = Path(os.getenv("CHROMA_PATH", str(BASE_DIR / "chroma_db"))).resolve()
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(BASE_DIR / "uploads"))).resolve()
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(5 * 1024 * 1024)))
-CORS_ORIGINS = tuple(origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173 , https://engineering-hub-indol.vercel.app/").split(",") if origin.strip())
+CORS_ORIGINS = tuple(origin.strip() for origin in os.getenv("CORS_ORIGINS", "https://engineering-hub-indol.vercel.app/").split(",") if origin.strip())
 
 
 def validate_startup_configuration() -> None:
